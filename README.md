@@ -9,7 +9,7 @@ projects. It aims to feel like IntelliJ's Spring support, but for Typelevel and 
 > **Status: v0.1.0-SNAPSHOT.**
 > - Built against IntelliJ IDEA **2026.2** (build 262.\*) and the Scala plugin **2026.2.18**.
 > - About 540 automated tests, each running inside a real headless IntelliJ against real cats, cats-effect and Play jars.
-> - Manual testing in a running IDE is still in progress. See [Known limitations](#known-limitations).
+> - Partly tried by hand in IntelliJ IDEA 2026.2.1. The rest is still in progress, see [Known limitations](#known-limitations).
 
 ---
 
@@ -138,7 +138,9 @@ includes. A root-level `PluginWiringTest` boots the fully merged plugin and chec
 those files loads. [PLAN.md](PLAN.md) has the product plan and design rationale.
 
 ## Known limitations
-- **Not yet tried by hand in a running IDE.** The UI interactions (popups, tool window, debugger renderers, the fiber dump console) are covered by model tests, not end-to-end tests.
+- **Only partly tried by hand.** In IntelliJ IDEA 2026.2.1, on a real Play 3 + cats project, these work: completion popups and
+  quick docs, the inspections, config-key checks, Endpoints, for-comprehension hints and the Typeclass Explorer. Gutters,
+  the Combinator Finder, the debugger renderers and the fiber dump console are covered by model tests only, not yet by hand.
 - **Compiler-backed completion (Metals presentation compiler) is a no-go for v1.** See
   [runtime/docs/G1-compiler-backed-completion.md](runtime/docs/G1-compiler-backed-completion.md).
 - **Config and messages files are handled as text,** not with a HOCON language plugin, so renaming a key doesn't update its usages.
