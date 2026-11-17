@@ -97,6 +97,29 @@ class EndpointsTest extends VisualTestBase {
 
     val show = Endpoints.scan(getProject).find(e => e.framework == "Play" && e.method == "GET").get
     assertEquals("show", show.target(getProject).map(_.asInstanceOf[com.intellij.psi.PsiNamedElement].getName).orNull)
+
+    locationsAreComputedDuringTheScan()
+  }
+
+  /**
+   * The tool window paints `location` on the EDT, which holds no read lock in 2026.2: reading a document there tripped
+   * "Read access is allowed from inside read-action only" on every repaint. Evaluate it on a pooled thread with no
+   * read action, where any document/PSI access fails the same assertion.
+   */
+  private def locationsAreComputedDuringTheScan(): Unit = {
+    val scanned = Endpoints.scan(getProject)
+    val locations = com.intellij.openapi.application.ApplicationManager.getApplication
+      .executeOnPooledThread[Seq[(String, String, String)]](() => scanned.map(e => (e.framework, e.method, e.location)))
+      .get(30, java.util.concurrent.TimeUnit.SECONDS)
+    val expected = Seq(
+      ("Play", "GET", "routes:1"),
+      ("Play", "POST", "routes:2"),
+      ("http4s", "GET", "UserRoutes.scala:5"),
+      ("http4s", "POST", "UserRoutes.scala:6"),
+      ("tapir", "GET", "Api.scala:4"),
+      ("tapir", "POST", "Api.scala:5")
+    )
+    expected.foreach(e => assertTrue(s"$e not in $locations", locations.contains(e)))
   }
 
   def testNoEndpointsInPlainCode(): Unit = {

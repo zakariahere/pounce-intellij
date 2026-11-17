@@ -17,15 +17,20 @@ import pounce.visual.util.VisualPsi
 import scala.collection.mutable
 import scala.jdk.CollectionConverters.*
 
-/** D7: one HTTP endpoint found in the project. */
-final case class Endpoint(method: String, path: String, framework: String, handler: String, file: VirtualFile, offset: Int) {
+/**
+ * D7: one HTTP endpoint found in the project.
+ *
+ * @param line 1-based, computed by the scanner inside its read action. The tool window paints `location` on the EDT,
+ *             which holds no read lock in 2026.2, so it must not touch documents or PSI.
+ */
+final case class Endpoint(method: String, path: String, framework: String, handler: String, file: VirtualFile, offset: Int, line: Int) {
 
   /** Play: the controller method for `controllers.UserController.show(id: Long)`; others: the source position. */
   def target(project: Project): Option[PsiElement] =
     if (framework != Endpoints.Play) None
     else Endpoints.playControllerMethod(project, handler)
 
-  def location: String = s"${file.getName}:${Option(com.intellij.openapi.fileEditor.FileDocumentManager.getInstance().getDocument(file)).map(_.getLineNumber(offset) + 1).getOrElse(0)}"
+  def location: String = s"${file.getName}:$line"
 }
 
 /**
@@ -40,6 +45,10 @@ object Endpoints {
   val Tapir  = "tapir"
 
   val HttpMethods: Set[String] = Set("GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS")
+
+  /** 1-based line of `offset` in `text`. */
+  def lineOf(text: CharSequence, offset: Int): Int =
+    com.intellij.openapi.util.text.StringUtil.offsetToLineNumber(text, offset.min(text.length)) + 1
 
   def scan(project: Project): Seq[Endpoint] = {
     val scope = GlobalSearchScope.projectScope(project)
@@ -92,7 +101,7 @@ object Endpoints {
     val ext   = FilenameIndex.getAllFilesByExt(project, "routes", scope).asScala.toSeq
     (named ++ ext).distinct.flatMap { vf =>
       val text = Option(PsiManager.getInstance(project).findFile(vf)).map(_.getText).getOrElse("")
-      parseRoutes(text).map(r => Endpoint(r.method, r.path, Play, r.action, vf, r.offset))
+      parseRoutes(text).map(r => Endpoint(r.method, r.path, Play, r.action, vf, r.offset, lineOf(text, r.offset)))
     }
   }
 
@@ -153,17 +162,20 @@ object Endpoints {
   private def http4sEndpoints(project: Project, scope: GlobalSearchScope): Seq[Endpoint] =
     filesWithWord(project, scope, Seq("HttpRoutes", "AuthedRoutes")).flatMap(http4sIn)
 
-  def http4sIn(file: ScalaFile): Seq[Endpoint] =
+  def http4sIn(file: ScalaFile): Seq[Endpoint] = {
+    lazy val text = file.getViewProvider.getContents
     file.depthFirst().collect { case c: ScCaseClause => c }.toSeq.flatMap { clause =>
       val inRoutes = clause.parentOfType[ScMethodCall].exists(call => RoutesCall.matches(call.getInvokedExpr.getText.trim))
       if (!inRoutes) None
       else
         clause.pattern.flatMap { p =>
           splitCasePattern(p.getText).map { case (method, rest) =>
-            Endpoint(method, http4sPath(rest), Http4s, handlerName(clause), file.getVirtualFile, p.getTextRange.getStartOffset)
+            val offset = p.getTextRange.getStartOffset
+            Endpoint(method, http4sPath(rest), Http4s, handlerName(clause), file.getVirtualFile, offset, lineOf(text, offset))
           }
         }
     }
+  }
 
   /** `Root / "users" / IntVar(id) :? Q(q)` → `/users/{id: Int}`. */
   def http4sPath(pattern: String): String = {
@@ -234,7 +246,9 @@ object Endpoints {
       else
         shapeOf(top, 0).flatMap { shape =>
           shape.method.map { m =>
-            Endpoint(m, if (shape.segments.isEmpty) "/" else shape.segments.mkString("/", "/", ""), Tapir, handlerName(top), file.getVirtualFile, top.getTextRange.getStartOffset)
+            val offset = top.getTextRange.getStartOffset
+            val path   = if (shape.segments.isEmpty) "/" else shape.segments.mkString("/", "/", "")
+            Endpoint(m, path, Tapir, handlerName(top), file.getVirtualFile, offset, lineOf(file.getViewProvider.getContents, offset))
           }
         }
     }.distinctBy(e => (e.offset, e.method, e.path))
