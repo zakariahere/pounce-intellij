@@ -11,6 +11,13 @@ projects. It aims to feel like IntelliJ's Spring support, but for Typelevel and 
 > - About 540 automated tests, each running inside a real headless IntelliJ against real cats, cats-effect and Play jars.
 > - Partly tried by hand in IntelliJ IDEA 2026.2.1. The rest is still in progress, see [Known limitations](#known-limitations).
 
+<p align="center">
+  <img src="docs/screenshots/05-completion-adds-import.gif" width="820"
+       alt="In a tagless UserService[F[_]: Sync], typing ids.trav offers traverse with the tail text Traverse[List], Applicative[F] · cats-core. Picking it inserts ids.traverse() and adds import cats.syntax.all._">
+  <br>
+  <sub>Type <code>ids.trav</code> in tagless code: only syntax that has instances is offered, and picking it adds the import.</sub>
+</p>
+
 ---
 
 ## What you get
@@ -51,6 +58,18 @@ projects. It aims to feel like IntelliJ's Spring support, but for Typelevel and 
 Before a simplification is offered, its replacement is type-checked against your code. If it doesn't resolve, or
 doesn't keep the original type, you never see it.
 
+<p align="center">
+  <img src="docs/screenshots/03-quickfix-flatmap.gif" width="820"
+       alt="The nested-effect inspection on IO.pure(id).map(i => IO.println(...)). Alt+Enter, Replace map with flatMap, fixes it">
+  <br>
+  <sub>A <code>map</code> that builds an <code>IO[IO[_]]</code>, fixed with one Alt+Enter.</sub>
+  <br><br>
+  <img src="docs/screenshots/01-inspections-overview.png" width="820"
+       alt="The sample's Smells.scala, where every method is highlighted by a different Pounce inspection">
+  <br>
+  <sub><code>samples/play3-cats/app/playground/Smells.scala</code>: each method trips a different inspection.</sub>
+</p>
+
 ### See what your effects are doing
 - **For-comprehension lens.** Each `<-` gets an `IO · User` hint. The `for` keyword shows the effect and bounds
   (`F: Sync`). A step in the wrong effect is marked `Option · String ≠ IO`.
@@ -62,6 +81,39 @@ doesn't keep the original type, you never see it.
   - *Typeclass Explorer:* which instances the type under the caret has, plus what you can call on it.
   - *Combinator Finder:* "I have `List[A]`, I want `IO[List[B]]`". Hoogle-style search over the catalog (Ctrl+Alt+Shift+K), plus a **Fill `???`** intention.
   - *Endpoints:* http4s routes, Play `conf/routes` and tapir endpoints, with navigation.
+
+<p align="center">
+  <img src="docs/screenshots/10-for-comprehension-lens.png" width="600"
+       alt="For-comprehension lens: F: Sync after the for keyword and F · Option[User] after a generator">
+  <br>
+  <sub>The lens: <code>F: Sync</code> on the <code>for</code>, <code>F · Option[User]</code> on the step.</sub>
+  <br><br>
+  <img src="docs/screenshots/08-combinator-finder.png" width="820"
+       alt="Combinator Finder. I have ids: List[Long], I want F[List[Option[User]]]. The first result is ids.traverse(???), with its signature and the function still needed">
+  <br>
+  <sub>Combinator Finder: from <code>List[Long]</code> to <code>F[List[Option[User]]]</code>.</sub>
+</p>
+
+<details>
+<summary>More screenshots: tagless wiring gutter, Typeclass Explorer, Endpoints</summary>
+<br>
+<p align="center">
+  <img src="docs/screenshots/06-tagless-wiring-gutter.png" width="820"
+       alt="The gutter on trait UserRepo[F[_]] lists its implementation InMemoryUserRepo and the place where it is built">
+  <br>
+  <sub>From a tagless algebra to its implementations and where they are built.</sub>
+  <br><br>
+  <img src="docs/screenshots/07-typeclass-explorer.png" width="820"
+       alt="Typeclass Explorer for List[Long]: every typeclass marked as available or not, the operations you can call, and the docs of traverse">
+  <br>
+  <sub>Typeclass Explorer: which instances <code>List[Long]</code> has, and what you can call on it.</sub>
+  <br><br>
+  <img src="docs/screenshots/09-endpoints.png" width="820"
+       alt="Endpoints tab listing the three routes of the sample's conf/routes with their handlers">
+  <br>
+  <sub>Endpoints: the sample's <code>conf/routes</code>, with navigation to each handler.</sub>
+</p>
+</details>
 
 ### Play 3 wiring, Spring-style
 - **Config keys:**
@@ -75,6 +127,39 @@ doesn't keep the original type, you never see it.
 - **i18n messages:** key completion and navigation, "Missing message key" and "Missing translation" with stub fixes.
 - **IO ↔ Future bridge:** an intention that turns an `IO[Result]` action into `Action.async { io.unsafeToFuture() }`,
   using the runtime already in scope. Also live templates `ioaction`, `ioactionjson`, `guicebind`, `playmodule`.
+
+<p align="center">
+  <img src="docs/screenshots/12-config-key-completion.png" width="820"
+       alt="Completion inside config.get[Int](&quot;pounce.sample.&quot;) lists greeting and page-size from application.conf with their values">
+  <br>
+  <sub>Config keys from your <code>application.conf</code>, with their values.</sub>
+  <br><br>
+  <img src="docs/screenshots/13-guice-navigation.gif" width="820"
+       alt="The gutter on an @Inject parameter leads to its @Provides method in AppModule, and that method's gutter leads back to the injection point">
+  <br>
+  <sub>From an <code>@Inject</code> parameter to its <code>@Provides</code> binding, and back.</sub>
+  <br><br>
+  <img src="docs/screenshots/15-io-to-action-async.gif" width="820"
+       alt="The Convert to Action.async intention turns Action { IO.pure(Ok(&quot;up&quot;)) } into Action.async { IO.pure(Ok(&quot;up&quot;)).unsafeToFuture() }">
+  <br>
+  <sub>An <code>IO[Result]</code> action becomes <code>Action.async { … .unsafeToFuture() }</code>.</sub>
+</p>
+
+<details>
+<summary>More screenshots: unknown config key, missing translation</summary>
+<br>
+<p align="center">
+  <img src="docs/screenshots/11-unknown-config-key.png" width="820"
+       alt="Unknown config key 'pounce.sample.page-sise': not defined in application.conf or any library reference.conf, with a fix that adds the key">
+  <br>
+  <sub>A typo in a config key, with a fix that adds it to <code>application.conf</code>.</sub>
+  <br><br>
+  <img src="docs/screenshots/14-missing-translation.png" width="820"
+       alt="Message key 'users.renamed' has no translation in messages.fr, with a fix that adds it">
+  <br>
+  <sub>A message key without a French translation, with a stub fix.</sub>
+</p>
+</details>
 
 ### Runtime and tests
 - **Debugger:** Step Into skips cats/cats-effect/fs2 internals. Renderers for `NonEmptyList`, `Chain`,
