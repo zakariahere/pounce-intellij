@@ -1,0 +1,10 @@
+<html>
+<body>
+Reports a blocking call (JDBC, <code>java.io</code>, <code>java.nio.file.Files</code>, <code>Thread.sleep</code>, <code>Await.result</code>, <code>scala.io.Source</code>, sockets, <code>Future#get</code>, ...) inside <code>IO(...)</code>, <code>IO.delay</code> or <code>Sync[F].delay</code>. Delay runs on the compute pool, which has one thread per core: blocking it starves every other fiber.
+<p>Before:</p>
+<pre><code>IO(Files.readString(path))</code></pre>
+<p>After (quick fix <b>Replace with IO.blocking</b>):</p>
+<pre><code>IO.blocking(Files.readString(path))</code></pre>
+<p>Interruptible calls (sleeps, waits, socket reads) also get <b>Replace with IO.interruptible</b>, and <code>Thread.sleep(n)</code> gets <b>Replace with IO.sleep</b>. The list of blocking APIs is data (<code>BlockingCalls.scala</code>); in-memory streams such as <code>ByteArrayInputStream</code> are excluded. Calls already inside <code>blocking</code> / <code>interruptible</code> are not reported.</p>
+</body>
+</html>

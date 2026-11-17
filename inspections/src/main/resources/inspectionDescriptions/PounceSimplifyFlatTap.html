@@ -1,0 +1,10 @@
+<html>
+<body>
+Reports a <code>flatMap</code> that runs an effect and returns its own argument.
+<p>Before:</p>
+<pre><code>fa.flatMap(u =&gt; log(u).as(u))</code></pre>
+<p>After (quick fix <b>Replace with .flatTap</b>):</p>
+<pre><code>fa.flatTap(u =&gt; log(u))</code></pre>
+<p>Every rewrite is checked before it is offered: the replacement must resolve, have its implicits, and keep a compatible type. The quick fix adds the cats syntax import if needed.</p>
+</body>
+</html>

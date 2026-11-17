@@ -1,0 +1,12 @@
+<html>
+<body>
+Reports <code>map(f).combineAll</code> and a hand-written <code>combineAll</code>.
+<p>Before:</p>
+<pre><code>xs.map(_.total).combineAll
+xs.foldLeft(Monoid[Int].empty)(_ |+| _)</code></pre>
+<p>After (quick fix <b>Replace with .foldMap</b>):</p>
+<pre><code>xs.foldMap(_.total)
+xs.combineAll</code></pre>
+<p>Every rewrite is checked before it is offered: the replacement must resolve, have its implicits, and keep a compatible type. The quick fix adds the cats syntax import if needed.</p>
+</body>
+</html>

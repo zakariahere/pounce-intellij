@@ -1,0 +1,12 @@
+<html>
+<body>
+Reports <code>map</code> whose function returns an effect, giving a nested effect such as <code>IO[IO[A]]</code> or <code>List[IO[A]]</code>. The inner effect is a value that nobody runs.
+<p>Before:</p>
+<pre><code>def save(u: User): IO[Unit] = ...
+
+val done: IO[Unit] = findUser(1).map(save).void   // save never runs</code></pre>
+<p>After (quick fix <b>Replace map with flatMap</b>):</p>
+<pre><code>val done: IO[Unit] = findUser(1).flatMap(save).void</code></pre>
+<p>For collections and <code>Option</code> the fix is <b>Replace map with traverse</b> (<code>ids.map(save)</code> &rarr; <code>ids.traverse(save)</code>), and <code>foreach</code> returning an effect becomes <code>traverse_</code>. Not reported when the nested type is what the code expects (an explicit <code>IO[IO[A]]</code>) or when <code>.flatten</code> follows.</p>
+</body>
+</html>

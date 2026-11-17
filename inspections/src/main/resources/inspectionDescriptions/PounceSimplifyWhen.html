@@ -1,0 +1,10 @@
+<html>
+<body>
+Reports an <code>if</code> whose other branch is a unit effect. Only for <code>F[Unit]</code> branches, so no value is lost.
+<p>Before:</p>
+<pre><code>if (debug) log(msg) else IO.unit</code></pre>
+<p>After (quick fix <b>Replace with .whenA</b>):</p>
+<pre><code>log(msg).whenA(debug)</code></pre>
+<p>Every rewrite is checked before it is offered: the replacement must resolve, have its implicits, and keep a compatible type. The quick fix adds the cats syntax import if needed.</p>
+</body>
+</html>

@@ -1,0 +1,153 @@
+package pounce.inspections.tagless
+
+import com.intellij.codeInsight.intention.IntentionAction
+import org.junit.Assert.{assertFalse, assertTrue}
+import pounce.inspections.{InspectionFixtureTestBase, MessageTestBase}
+
+import scala.jdk.CollectionConverters.*
+
+// ---------------------------------------------------------------------------------------------------------------
+// B8 (a) redundant bounds
+// ---------------------------------------------------------------------------------------------------------------
+
+class RedundantBoundInspectionTest extends MessageTestBase[RedundantBoundInspection] {
+  import RedundantBoundInspection.*
+
+  override protected def isOwnMessage(s: String): Boolean = s.startsWith("Redundant bound")
+
+  private val H = "import cats._\nimport cats.effect._\n"
+
+  def testContextBound(): Unit =
+    assertHighlight(message("Monad", "Sync"), H + s"object A { def f[F[_]: ${START}Monad$END: Sync]: F[Unit] = Sync[F].unit }")
+  def testContextBoundFix(): Unit = assertFix(
+    message("Monad", "Sync"),
+    removeHint("Monad"),
+    H + "object A { def f[F[_]: Monad: Sync]: F[Unit] = Sync[F].unit }",
+    H + "object A { def f[F[_]: Sync]: F[Unit] = Sync[F].unit }"
+  )
+  def testImplicitParamFix(): Unit = assertFix(
+    message("Functor", "Monad"),
+    removeHint("Functor"),
+    H + "class Repo[F[_]](implicit M: Monad[F], Fn: Functor[F]) { def unit: F[Unit] = M.unit }",
+    H + "class Repo[F[_]](implicit M: Monad[F]) { def unit: F[Unit] = M.unit }"
+  )
+
+  // ---- negatives ----
+  def testIndependentBounds(): Unit = assertNone(H + "object A { def f[F[_]: Monad: Parallel]: F[Unit] = Monad[F].unit }")
+  def testSingleBound(): Unit       = assertNone(H + "object A { def f[F[_]: Sync]: F[Unit] = Sync[F].unit }")
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// B9 conflicting cats imports
+// ---------------------------------------------------------------------------------------------------------------
+
+class ConflictingCatsImportsInspectionTest extends MessageTestBase[ConflictingCatsImportsInspection] {
+  import ConflictingCatsImportsInspection.*
+
+  override protected def isOwnMessage(s: String): Boolean = s.startsWith("Conflicting cats imports")
+
+  private val Body = "\nobject A { def f = List(1).map(_ + 1) }"
+
+  def testImplicitsAndSyntaxAll(): Unit = assertHighlight(
+    message("cats.implicits", "cats.syntax.all"),
+    s"import ${START}cats.implicits._$END\nimport cats.syntax.all._" + Body
+  )
+  def testRemoveFix(): Unit = assertFix(
+    message("cats.implicits", "cats.syntax.all"),
+    removeHint("cats.implicits"),
+    "import cats.implicits._\nimport cats.syntax.all._" + Body,
+    "import cats.syntax.all._" + Body
+  )
+  def testGranularNextToAll(): Unit = assertHighlight(
+    message("cats.syntax.functor", "cats.syntax.all"),
+    s"import cats.syntax.all._\nimport ${START}cats.syntax.functor._$END" + Body
+  )
+  def testInstancesNextToImplicits(): Unit = assertHighlight(
+    message("cats.instances.list", "cats.implicits"),
+    s"import cats.implicits._\nimport ${START}cats.instances.list._$END" + Body
+  )
+  def testEffectSyntax(): Unit = assertHighlight(
+    message("cats.effect.syntax.spawn", "cats.effect.syntax.all"),
+    s"import cats.effect.syntax.all._\nimport ${START}cats.effect.syntax.spawn._$END" + Body
+  )
+
+  // ---- negatives ----
+  def testSingleImport(): Unit     = assertNone("import cats.syntax.all._" + Body)
+  def testGranularOnly(): Unit     = assertNone("import cats.syntax.functor._\nimport cats.syntax.flatMap._" + Body)
+  def testCoreAndEffect(): Unit    = assertNone("import cats.syntax.all._\nimport cats.effect.syntax.all._" + Body)
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// B11 missing instance explainer
+// ---------------------------------------------------------------------------------------------------------------
+
+class MissingInstanceInspectionTest extends MessageTestBase[MissingInstanceInspection] {
+  import MissingInstanceInspection.*
+
+  override protected def isOwnMessage(s: String): Boolean = s.startsWith("No ") && (s.contains(" instance:") || s.startsWith("No implicit"))
+
+  private val H = "import cats._\nimport cats.syntax.all._\nimport cats.effect._\n"
+
+  def testWeakBound(): Unit = assertHighlight(
+    taglessMessage("Monad", "F", Seq("Functor")),
+    H + s"object A { def load[F[_]: Functor](id: Int): F[Int] = ${START}Monad[F]$END.pure(id) }"
+  )
+  def testStrengthenFix(): Unit = assertFix(
+    taglessMessage("Monad", "F", Seq("Functor")),
+    strengthenHint("Monad"),
+    H + "object A { def load[F[_]: Functor](id: Int): F[Int] = Monad[F].pure(id) }",
+    H + "object A { def load[F[_]: Monad](id: Int): F[Int] = Monad[F].pure(id) }"
+  )
+  def testNoBoundFix(): Unit = assertFix(
+    taglessMessage("Sync", "F", Nil),
+    addHint("F", "Sync"),
+    H + "object A { def load[F[_]](id: Int): F[Int] = Sync[F].delay(id) }",
+    H + "object A { def load[F[_]: Sync](id: Int): F[Int] = Sync[F].delay(id) }"
+  )
+
+  // ---- negatives ----
+  def testSatisfied(): Unit = assertNone(H + "object A { def load[F[_]: Sync](id: Int): F[Int] = Monad[F].pure(id) }")
+  def testConcreteKnown(): Unit = assertNone(H + "object A { val m = Monad[Option].pure(1) }")
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// B8 (b) "Strengthen bound to Monad" on the Scala plugin's unresolved-reference error
+// ---------------------------------------------------------------------------------------------------------------
+
+class StrengthenBoundFixProviderTest extends InspectionFixtureTestBase {
+
+  private val H = "import cats._\nimport cats.syntax.all._\n"
+
+  private def intentions(text: String): Seq[IntentionAction] = {
+    myFixture.configureByText("A.scala", text)
+    myFixture.doHighlighting()
+    myFixture.getAvailableIntentions.asScala.toSeq
+  }
+
+  private def names(text: String): Seq[String] = intentions(text).map(_.getText)
+
+  def testOfferedForFlatMapOnFunctor(): Unit = {
+    val ns = names(H + s"object A { def f[F[_]: Functor](fa: F[Int]): F[Int] = fa.flat${CARET}Map(i => fa) }")
+    assertTrue(s"intentions: $ns", ns.contains(StrengthenBoundFixProvider.strengthenText("FlatMap")) || ns.contains(StrengthenBoundFixProvider.strengthenText("Monad")))
+  }
+
+  def testApplyStrengthenToMonad(): Unit = {
+    val text = H + s"object A { def f[F[_]: Functor](fa: F[Int]): F[Int] = fa.flat${CARET}Map(i => fa) }"
+    val action = intentions(text).find(_.getText == StrengthenBoundFixProvider.strengthenText("Monad"))
+      .orElse(intentions(text).find(_.getText == StrengthenBoundFixProvider.strengthenText("FlatMap")))
+    assertTrue("strengthen action", action.isDefined)
+    myFixture.launchAction(action.get)
+    val result = myFixture.getFile.getText
+    assertTrue(result, result.contains("def f[F[_]: Monad]") || result.contains("def f[F[_]: FlatMap]"))
+  }
+
+  def testNotOfferedWhenBoundIsEnough(): Unit = {
+    val ns = names(H + s"object A { def f[F[_]: Monad](fa: F[Int]): F[Int] = fa.flat${CARET}Map(i => fa) }")
+    assertFalse(s"intentions: $ns", ns.exists(_.startsWith("Strengthen bound to")))
+  }
+
+  def testImportWhenSyntaxMissing(): Unit = {
+    val ns = names(s"import cats._\nobject A { def f[F[_]: Monad](fa: F[Int]): F[Int] = fa.flat${CARET}Map(i => fa) }")
+    assertTrue(s"intentions: $ns", ns.contains("Import cats.syntax.all._"))
+  }
+}

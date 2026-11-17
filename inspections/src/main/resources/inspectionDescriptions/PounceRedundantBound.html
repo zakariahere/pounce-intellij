@@ -1,0 +1,10 @@
+<html>
+<body>
+Reports a typeclass bound implied by another bound of the same type parameter (<code>F[_]: Monad: Sync</code>: <code>Sync</code> is a <code>Monad</code>). Two evidences for <code>Monad[F]</code> make implicit resolution ambiguous in Scala 2, which breaks syntax like <code>.flatMap</code>.
+<p>Before:</p>
+<pre><code>def save[F[_]: Monad: Sync](u: User): F[Unit]</code></pre>
+<p>After (quick fix <b>Remove redundant Monad</b>):</p>
+<pre><code>def save[F[_]: Sync](u: User): F[Unit]</code></pre>
+<p>Works for context bounds and implicit parameters (<code>(implicit M: Monad[F], S: Sync[F])</code>); an implicit parameter is only removed by the fix when it is unused.</p>
+</body>
+</html>

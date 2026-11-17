@@ -1,0 +1,11 @@
+<html>
+<body>
+Reports cats imports that bring the same implicits into scope: <code>cats.implicits._</code> with <code>cats.syntax.all._</code>, a granular <code>cats.syntax.functor._</code> next to <code>cats.syntax.all._</code>, <code>cats.instances.list._</code> next to <code>cats.implicits._</code>, and the cats-effect equivalents. In Scala 2 the duplicated implicits are ambiguous, so syntax and instances stop resolving.
+<p>Before:</p>
+<pre><code>import cats.implicits._
+import cats.syntax.all._</code></pre>
+<p>After (quick fix <b>Remove import cats.implicits._</b>):</p>
+<pre><code>import cats.syntax.all._</code></pre>
+<p>Which import is kept follows <b>Settings | Pounce | import style</b> (or the style detected in the project).</p>
+</body>
+</html>

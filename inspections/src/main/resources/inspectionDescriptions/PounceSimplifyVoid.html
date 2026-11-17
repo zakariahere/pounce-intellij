@@ -1,0 +1,12 @@
+<html>
+<body>
+Reports effects mapped to <code>Unit</code> by hand.
+<p>Before:</p>
+<pre><code>fa.map(_ =&gt; ())
+fa.as(())
+fa &gt;&gt; IO.unit</code></pre>
+<p>After (quick fix <b>Replace with .void</b>):</p>
+<pre><code>fa.void</code></pre>
+<p>Every rewrite is checked before it is offered: the replacement must resolve, have its implicits, and keep a compatible type. The quick fix adds the cats syntax import if needed.</p>
+</body>
+</html>

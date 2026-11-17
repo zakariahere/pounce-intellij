@@ -1,0 +1,99 @@
+<idea-plugin>
+    <!-- inspections pillar (B: effect-safety inspections, C: simplifications); included from the root plugin.xml. -->
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- ===================================== B: effect safety ===================================== -->
+        <localInspection language="Scala" shortName="PounceDiscardedEffect" displayName="Discarded effect (never runs)"
+                         groupPath="Scala" groupName="Pounce: Effects" enabledByDefault="true" level="WARNING"
+                         implementationClass="pounce.inspections.effects.DiscardedEffectInspection"/>
+        <localInspection language="Scala" shortName="PounceNestedEffect" displayName="Nested effect (map instead of flatMap / traverse)"
+                         groupPath="Scala" groupName="Pounce: Effects" enabledByDefault="true" level="WARNING"
+                         implementationClass="pounce.inspections.effects.NestedEffectInspection"/>
+        <localInspection language="Scala" shortName="PounceBlockingInDelay" displayName="Blocking call inside delay"
+                         groupPath="Scala" groupName="Pounce: Effects" enabledByDefault="true" level="WARNING"
+                         implementationClass="pounce.inspections.effects.BlockingInDelayInspection"/>
+        <localInspection language="Scala" shortName="PounceUnsafeRunOutsideEdge" displayName="unsafeRun outside the edge of the world"
+                         groupPath="Scala" groupName="Pounce: Effects" enabledByDefault="true" level="WARNING"
+                         implementationClass="pounce.inspections.effects.UnsafeRunOutsideEdgeInspection"/>
+        <localInspection language="Scala" shortName="PounceEagerFuture" displayName="Future evaluated before fromFuture"
+                         groupPath="Scala" groupName="Pounce: Effects" enabledByDefault="true" level="WARNING"
+                         implementationClass="pounce.inspections.effects.EagerFutureInspection"/>
+        <localInspection language="Scala" shortName="PounceFiberLeak" displayName="Fiber started but never joined or cancelled"
+                         groupPath="Scala" groupName="Pounce: Effects" enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="pounce.inspections.effects.FiberLeakInspection"/>
+        <localInspection language="Scala" shortName="PounceResourceEscapesUse" displayName="Resource value escapes use"
+                         groupPath="Scala" groupName="Pounce: Effects" enabledByDefault="true" level="WARNING"
+                         implementationClass="pounce.inspections.effects.ResourceEscapesUseInspection"/>
+        <localInspection language="Scala" shortName="PounceMixedEffectsInFor" displayName="Mixed effects in for-comprehension"
+                         groupPath="Scala" groupName="Pounce: Effects" enabledByDefault="true" level="WARNING"
+                         implementationClass="pounce.inspections.effects.MixedEffectsInForInspection"/>
+
+        <!-- ===================================== B: tagless final ===================================== -->
+        <localInspection language="Scala" shortName="PounceRedundantBound" displayName="Redundant typeclass bound"
+                         groupPath="Scala" groupName="Pounce: Tagless" enabledByDefault="true" level="WARNING"
+                         implementationClass="pounce.inspections.tagless.RedundantBoundInspection"/>
+        <localInspection language="Scala" shortName="PounceConflictingCatsImports" displayName="Conflicting cats imports"
+                         groupPath="Scala" groupName="Pounce: Tagless" enabledByDefault="true" level="WARNING"
+                         implementationClass="pounce.inspections.tagless.ConflictingCatsImportsInspection"/>
+        <localInspection language="Scala" shortName="PounceMissingInstance" displayName="Missing typeclass instance"
+                         groupPath="Scala" groupName="Pounce: Tagless" enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="pounce.inspections.tagless.MissingInstanceInspection"/>
+
+        <!-- ===================================== C: simplifications ===================================== -->
+        <localInspection language="Scala" shortName="PounceSimplifyVoid" displayName="Simplify to .void"
+                         groupPath="Scala" groupName="Pounce: Simplifications" enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="pounce.inspections.simplifications.SimplifyVoidInspection"/>
+        <localInspection language="Scala" shortName="PounceSimplifyAs" displayName="Simplify to .as"
+                         groupPath="Scala" groupName="Pounce: Simplifications" enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="pounce.inspections.simplifications.SimplifyAsInspection"/>
+        <localInspection language="Scala" shortName="PounceSimplifyFlatMapToSequence" displayName="Simplify flatMap(_ => fb) to &gt;&gt; / *&gt;"
+                         groupPath="Scala" groupName="Pounce: Simplifications" enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="pounce.inspections.simplifications.SimplifyFlatMapToSequenceInspection"/>
+        <localInspection language="Scala" shortName="PounceSimplifyMapPure" displayName="Simplify flatMap(a => F.pure(...)) to map"
+                         groupPath="Scala" groupName="Pounce: Simplifications" enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="pounce.inspections.simplifications.SimplifyMapPureInspection"/>
+        <localInspection language="Scala" shortName="PounceSimplifyFlatten" displayName="Simplify map(f).flatten / flatMap(identity)"
+                         groupPath="Scala" groupName="Pounce: Simplifications" enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="pounce.inspections.simplifications.SimplifyFlattenInspection"/>
+        <localInspection language="Scala" shortName="PounceSimplifyFlatTap" displayName="Simplify to .flatTap"
+                         groupPath="Scala" groupName="Pounce: Simplifications" enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="pounce.inspections.simplifications.SimplifyFlatTapInspection"/>
+        <localInspection language="Scala" shortName="PounceSimplifyUnit" displayName="Simplify to .unit"
+                         groupPath="Scala" groupName="Pounce: Simplifications" enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="pounce.inspections.simplifications.SimplifyUnitInspection"/>
+        <localInspection language="Scala" shortName="PounceSimplifyWhen" displayName="Simplify to .whenA / .unlessA"
+                         groupPath="Scala" groupName="Pounce: Simplifications" enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="pounce.inspections.simplifications.SimplifyWhenInspection"/>
+        <localInspection language="Scala" shortName="PounceSimplifyTraverse" displayName="Simplify to traverse / sequence"
+                         groupPath="Scala" groupName="Pounce: Simplifications" enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="pounce.inspections.simplifications.SimplifyTraverseInspection"/>
+        <localInspection language="Scala" shortName="PounceSimplifyFoldMap" displayName="Simplify to foldMap / combineAll"
+                         groupPath="Scala" groupName="Pounce: Simplifications" enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="pounce.inspections.simplifications.SimplifyFoldMapInspection"/>
+        <localInspection language="Scala" shortName="PounceSimplifyOptionTraverse" displayName="Simplify Option fold to traverse_"
+                         groupPath="Scala" groupName="Pounce: Simplifications" enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="pounce.inspections.simplifications.SimplifyOptionTraverseInspection"/>
+        <localInspection language="Scala" shortName="PounceSimplifyErrorHandling" displayName="Simplify error handling (option, handleError, redeem)"
+                         groupPath="Scala" groupName="Pounce: Simplifications" enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="pounce.inspections.simplifications.SimplifyErrorHandlingInspection"/>
+        <localInspection language="Scala" shortName="PounceSimplifyForComprehension" displayName="Simplify for-comprehension"
+                         groupPath="Scala" groupName="Pounce: Simplifications" enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="pounce.inspections.simplifications.SimplifyForComprehensionInspection"/>
+        <localInspection language="Scala" shortName="PounceSimplifyMapN" displayName="Simplify to mapN / tupled"
+                         groupPath="Scala" groupName="Pounce: Simplifications" enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="pounce.inspections.simplifications.SimplifyMapNInspection"/>
+        <localInspection language="Scala" shortName="PounceSimplifyEitherT" displayName="Simplify EitherT construction"
+                         groupPath="Scala" groupName="Pounce: Simplifications" enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="pounce.inspections.simplifications.SimplifyEitherTInspection"/>
+        <localInspection language="Scala" shortName="PounceSimplifyOptionT" displayName="Simplify OptionT construction"
+                         groupPath="Scala" groupName="Pounce: Simplifications" enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="pounce.inspections.simplifications.SimplifyOptionTInspection"/>
+        <localInspection language="Scala" shortName="PounceUseCatsLiftSyntax" displayName="Use cats lift syntax (asRight, asLeft, some)"
+                         groupPath="Scala" groupName="Pounce: Simplifications" enabledByDefault="true" level="INFORMATION"
+                         implementationClass="pounce.inspections.simplifications.UseCatsLiftSyntaxInspection"/>
+    </extensions>
+
+    <!-- B8 (b): "Strengthen bound to Monad" on the Scala plugin's own "Cannot resolve symbol flatMap" error. -->
+    <extensions defaultExtensionNs="org.intellij.scala">
+        <unresolvedReferenceFixProvider implementation="pounce.inspections.tagless.StrengthenBoundFixProvider"/>
+    </extensions>
+</idea-plugin>

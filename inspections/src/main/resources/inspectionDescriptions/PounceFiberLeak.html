@@ -1,0 +1,10 @@
+<html>
+<body>
+Reports <code>.start</code> whose fiber is thrown away (<code>fa.start &gt;&gt; fb</code>, <code>fa.start.void</code>, <code>_ &lt;- fa.start</code>). Nobody joins or cancels the fiber, so it keeps running (or leaks) when the rest fails or is cancelled.
+<p>Before:</p>
+<pre><code>worker.start &gt;&gt; server.serve</code></pre>
+<p>After (quick fix <b>Use .background (cancel the fiber when the rest completes)</b>):</p>
+<pre><code>worker.background.surround(server.serve)</code></pre>
+<p>A bare <code>fa.start</code> statement is left to the discarded-effect inspection. Generators that bind the fiber and use it (<code>fib &lt;- fa.start; ...; fib.join</code>) are not reported.</p>
+</body>
+</html>

@@ -1,0 +1,15 @@
+<html>
+<body>
+Reports a config path read from Scala code that is not defined in the project's <code>application.conf</code>
+(including <code>include</code>d files and <code>application.&lt;env&gt;.conf</code> variants) nor in any library
+<code>reference.conf</code> &mdash; a <code>ConfigException.Missing</code> at runtime.
+<p>Recognised reads: <code>Configuration.get[T]("&hellip;")</code>, <code>getMillis</code>, <code>getNanos</code>,
+<code>underlying.getString("&hellip;")</code> and every <code>com.typesafe.config.Config.getX</code>,
+<code>ConfigFactory.load().getX("&hellip;")</code>, pureconfig <code>ConfigSource.default.at("&hellip;")</code>.</p>
+<p>Not reported: optional reads (<code>getOptional</code>, <code>has</code>, <code>hasPath</code>,
+<code>get[Option[T]]</code>), paths below a <code>${?ENV}</code> substitution, relative configs whose prefix is not
+visible, reads guarded by <code>has</code>/<code>hasPath</code> or wrapped in <code>Try</code>, and projects whose
+conf files have unresolvable includes or do not parse.</p>
+<p>The quick fix appends the key with a placeholder value of the read type to <code>application.conf</code>.</p>
+</body>
+</html>

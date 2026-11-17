@@ -1,0 +1,14 @@
+target/
+project/target/
+project/project/
+.bsp/
+.bloop/
+.metals/
+.idea/
+*.iml
+.scala-build/
+out/
+
+# Play sample runtime files
+samples/**/logs/
+samples/**/RUNNING_PID

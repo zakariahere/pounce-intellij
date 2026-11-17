@@ -1,0 +1,5 @@
+object Users {
+  type AppIO[A] = EitherT[IO, AppError, A]
+  def find(id: Int): <spot>AppIO[User]</spot> = ???
+  def save(u: User): AppIO[Unit] = ???
+}

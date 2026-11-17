@@ -1,0 +1,3 @@
+# users.renamed is missing on purpose: Pounce reports it as a missing translation.
+users.title=Utilisateurs
+users.notFound=Aucun utilisateur avec l''identifiant {0}

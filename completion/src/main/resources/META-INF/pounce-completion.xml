@@ -1,0 +1,16 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- A1-A3, A5: qualifier.<caret> (syntax / lift / tuple ops, curated companion & summoner members) -->
+        <completion.contributor language="Scala" id="pounceCatsLens" order="first"
+                                implementationClass="pounce.completion.CatsLensContributor"/>
+        <!-- A4: smart completion from the expected type -->
+        <completion.contributor language="Scala" id="pounceSmartLens"
+                                implementationClass="pounce.completion.SmartLensContributor"/>
+        <!-- A6: .io / .delay / .liftF / .eval ... -->
+        <codeInsight.template.postfixTemplateProvider language="Scala"
+                                                      implementationClass="pounce.completion.postfix.PouncePostfixTemplateProvider"/>
+        <!-- A7: quick documentation for Pounce lookup items -->
+        <platform.backend.documentation.lookupElementTargetProvider order="first"
+                                                                    implementation="pounce.completion.doc.LensDocumentation"/>
+    </extensions>
+</idea-plugin>

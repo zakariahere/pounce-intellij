@@ -1,0 +1,16 @@
+<html>
+<body>
+Reports an <code>@Inject()</code> constructor parameter whose type Guice cannot provide, which fails at application
+start with a <code>ConfigurationException</code>:
+<ul>
+  <li>a trait / abstract class with no <code>bind(classOf[A]).to(...)</code>, <code>bind[A].to[B]</code>,
+      <code>@Provides</code> method, <code>@ImplementedBy</code> or <code>@ProvidedBy</code>;</li>
+  <li>a project class without an <code>@Inject</code> or no-argument constructor and no binding.</li>
+</ul>
+<p>Conservative: types bound by Play, Pekko and Guice themselves (<code>play.*</code>, <code>org.apache.pekko.*</code>,
+<code>com.google.inject.*</code>, <code>javax/jakarta.inject.*</code>, <code>com.typesafe.config.*</code>,
+<code>ExecutionContext</code>, ...) are never reported, nor are library types from jars that ship a Guice/Play module,
+types mentioned anywhere inside a Guice/Play module, and projects using compile-time DI
+(<code>BuiltInComponentsFromContext</code>).</p>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<idea-plugin>
+    <!-- runtime pillar: register extensions here (included from the root plugin.xml). -->
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="pounce.runtime.settings.PounceRuntimeSettings"/>
+        <applicationConfigurable parentId="pounce.settings" instance="pounce.runtime.settings.PounceRuntimeConfigurable"
+                                 id="pounce.settings.runtime" displayName="Runtime &amp; Debugger"/>
+
+        <!-- F1a: Step Into skips cats / cats-effect / fs2 internals and Scala function plumbing -->
+        <debuggerClassFilterProvider implementation="pounce.runtime.debugger.CatsSteppingFilterProvider"/>
+
+        <!-- F1b: data-structure renderers (Settings | Build, Execution, Deployment | Debugger | Data Views | Java Type Renderers) -->
+        <debugger.compoundRendererProvider implementation="pounce.runtime.debugger.renderers.NonEmptyListRendererProvider"/>
+        <debugger.compoundRendererProvider implementation="pounce.runtime.debugger.renderers.NonEmptyVectorRendererProvider"/>
+        <debugger.compoundRendererProvider implementation="pounce.runtime.debugger.renderers.ChainRendererProvider"/>
+        <debugger.compoundRendererProvider implementation="pounce.runtime.debugger.renderers.ValidatedRendererProvider"/>
+        <debugger.compoundRendererProvider implementation="pounce.runtime.debugger.renderers.IorRendererProvider"/>
+        <debugger.compoundRendererProvider implementation="pounce.runtime.debugger.renderers.EitherTRendererProvider"/>
+        <debugger.compoundRendererProvider implementation="pounce.runtime.debugger.renderers.OptionTRendererProvider"/>
+        <debugger.compoundRendererProvider implementation="pounce.runtime.debugger.renderers.RefRendererProvider"/>
+
+        <!-- F2: weaver run gutters, run through sbt: testOnly Suite, then the weaver only-filter option with "Suite.test" -->
+        <runLineMarkerContributor language="Scala" implementationClass="pounce.runtime.tests.WeaverRunLineMarkerContributor"/>
+        <runConfigurationProducer implementation="pounce.runtime.tests.WeaverSbtTestConfigurationProducer"/>
+
+        <!-- F4: Cats Effect / weaver / munit-cats-effect live templates -->
+        <defaultLiveTemplates file="liveTemplates/PounceCatsEffect"/>
+    </extensions>
+
+    <actions>
+        <!-- F3: live fiber snapshot through cats-effect's LiveFiberSnapshotTrigger MBean -->
+        <action id="Pounce.DumpCatsEffectFibers" class="pounce.runtime.fibers.DumpCatsEffectFibersAction"
+                text="Pounce: Dump Cats Effect Fibers"
+                description="Attach to a local JVM and show a cats-effect live fiber snapshot (states and traces)">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+    </actions>
+</idea-plugin>

@@ -1,0 +1,72 @@
+<templateSet group="Pounce (Cats Effect)">
+  <!-- File-level skeletons carry their imports (the Scala plugin does not shorten FQNs in live templates). -->
+  <template name="ioapp"
+            value="import cats.effect.{IO, IOApp}&#10;&#10;object $NAME$ extends IOApp.Simple {&#10;  def run: IO[Unit] =&#10;    $BODY$$END$&#10;}&#10;"
+            description="Cats Effect IOApp.Simple skeleton" toReformat="true" toShortenFQNames="false">
+    <variable name="NAME" expression="fileNameWithoutExtension()" defaultValue="&quot;Main&quot;" alwaysStopAt="true"/>
+    <variable name="BODY" expression="" defaultValue="&quot;IO.println(\&quot;Hello, Cats Effect!\&quot;)&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="SCALA_CODE" value="true"/>
+    </context>
+  </template>
+
+  <template name="ioappargs"
+            value="import cats.effect.{ExitCode, IO, IOApp}&#10;&#10;object $NAME$ extends IOApp {&#10;  def run(args: List[String]): IO[ExitCode] =&#10;    $BODY$$END$.as(ExitCode.Success)&#10;}&#10;"
+            description="Cats Effect IOApp with command-line args and ExitCode" toReformat="true" toShortenFQNames="false">
+    <variable name="NAME" expression="fileNameWithoutExtension()" defaultValue="&quot;Main&quot;" alwaysStopAt="true"/>
+    <variable name="BODY" expression="" defaultValue="&quot;IO.println(args.mkString(\&quot; \&quot;))&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="SCALA_CODE" value="true"/>
+    </context>
+  </template>
+
+  <template name="resmake"
+            value="Resource.make($ACQUIRE$)($RES$ => $RELEASE$)$END$"
+            description="Resource.make(acquire)(release)" toReformat="false" toShortenFQNames="false">
+    <variable name="ACQUIRE" expression="" defaultValue="&quot;IO(???)&quot;" alwaysStopAt="true"/>
+    <variable name="RES" expression="" defaultValue="&quot;r&quot;" alwaysStopAt="true"/>
+    <variable name="RELEASE" expression="" defaultValue="&quot;IO.unit&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="SCALA_CODE" value="true"/>
+    </context>
+  </template>
+
+  <template name="algebra"
+            value="trait $NAME$[F[_]] {&#10;  $END$&#10;}&#10;&#10;object $NAME$ {&#10;  def apply[F[_]](implicit ev: $NAME$[F]): $NAME$[F] = ev&#10;}&#10;"
+            description="Tagless-final algebra trait X[F[_]] with a summoner in its companion" toReformat="true" toShortenFQNames="false">
+    <variable name="NAME" expression="fileNameWithoutExtension()" defaultValue="&quot;Algebra&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="SCALA_CODE" value="true"/>
+    </context>
+  </template>
+
+  <template name="ioref"
+            value="Ref.of[IO, $TYPE$]($INIT$)$END$"
+            description="Ref.of[IO, A](initial value)" toReformat="false" toShortenFQNames="false">
+    <variable name="TYPE" expression="" defaultValue="&quot;Int&quot;" alwaysStopAt="true"/>
+    <variable name="INIT" expression="" defaultValue="&quot;0&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="SCALA_CODE" value="true"/>
+    </context>
+  </template>
+
+  <template name="weaversuite"
+            value="import cats.effect.IO&#10;import weaver.SimpleIOSuite&#10;&#10;object $NAME$ extends SimpleIOSuite {&#10;&#10;  test(&quot;$TEST$&quot;) {&#10;    IO.pure(1).map(x =&gt; expect(x == 1))$END$&#10;  }&#10;&#10;  pureTest(&quot;pure expectation&quot;) {&#10;    expect(1 + 1 == 2)&#10;  }&#10;}&#10;"
+            description="weaver SimpleIOSuite skeleton (test + pureTest)" toReformat="true" toShortenFQNames="false">
+    <variable name="NAME" expression="fileNameWithoutExtension()" defaultValue="&quot;MySuite&quot;" alwaysStopAt="true"/>
+    <variable name="TEST" expression="" defaultValue="&quot;does something&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="SCALA_CODE" value="true"/>
+    </context>
+  </template>
+
+  <template name="munitce"
+            value="import cats.effect.IO&#10;import munit.CatsEffectSuite&#10;&#10;class $NAME$ extends CatsEffectSuite {&#10;&#10;  test(&quot;$TEST$&quot;) {&#10;    IO.pure(1).assertEquals(1)$END$&#10;  }&#10;}&#10;"
+            description="munit-cats-effect CatsEffectSuite skeleton" toReformat="true" toShortenFQNames="false">
+    <variable name="NAME" expression="fileNameWithoutExtension()" defaultValue="&quot;MySuite&quot;" alwaysStopAt="true"/>
+    <variable name="TEST" expression="" defaultValue="&quot;does something&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="SCALA_CODE" value="true"/>
+    </context>
+  </template>
+</templateSet>

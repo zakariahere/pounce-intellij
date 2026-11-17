@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Pounce: Play 3 + cats-effect live templates (Scala code context). -->
+<templateSet group="Pounce Play">
+
+  <template name="ioaction"
+            value="def $NAME$ = Action.async { implicit request =&gt;&#10;  ($BODY$: cats.effect.IO[play.api.mvc.Result]).unsafeToFuture()&#10;}$END$"
+            description="Play action running an IO[Result] (Action.async + unsafeToFuture)"
+            toReformat="true" toShortenFQNames="true">
+    <variable name="NAME" expression="" defaultValue="&quot;index&quot;" alwaysStopAt="true"/>
+    <variable name="BODY" expression="" defaultValue="&quot;cats.effect.IO.pure(Ok)&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="SCALA_CODE" value="true"/>
+    </context>
+  </template>
+
+  <template name="ioactionjson"
+            value="def $NAME$ = Action.async(parse.json) { implicit request =&gt;&#10;  request.body.validate[$TYPE$].fold(&#10;    errors =&gt; scala.concurrent.Future.successful(BadRequest(play.api.libs.json.JsError.toJson(errors))),&#10;    $VAR$ =&gt; ($BODY$: cats.effect.IO[play.api.mvc.Result]).unsafeToFuture()&#10;  )&#10;}$END$"
+            description="Play JSON action: validate the body as T, run an IO[Result]"
+            toReformat="true" toShortenFQNames="true">
+    <variable name="NAME" expression="" defaultValue="&quot;create&quot;" alwaysStopAt="true"/>
+    <variable name="TYPE" expression="" defaultValue="&quot;T&quot;" alwaysStopAt="true"/>
+    <variable name="VAR" expression="" defaultValue="&quot;input&quot;" alwaysStopAt="true"/>
+    <variable name="BODY" expression="" defaultValue="&quot;cats.effect.IO.pure(Created)&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="SCALA_CODE" value="true"/>
+    </context>
+  </template>
+
+  <template name="guicebind"
+            value="bind(classOf[$A$]).to(classOf[$B$])$END$"
+            description="Guice binding: bind(classOf[A]).to(classOf[B])"
+            toReformat="false" toShortenFQNames="true">
+    <variable name="A" expression="" defaultValue="&quot;Service&quot;" alwaysStopAt="true"/>
+    <variable name="B" expression="" defaultValue="&quot;ServiceImpl&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="SCALA_CODE" value="true"/>
+    </context>
+  </template>
+
+  <template name="playmodule"
+            value="class $NAME$ extends com.google.inject.AbstractModule {&#10;  override def configure(): Unit = {&#10;    bind(classOf[$A$]).to(classOf[$B$])$END$&#10;  }&#10;}"
+            description="Guice module for Play (enable it with play.modules.enabled += &quot;...&quot;)"
+            toReformat="true" toShortenFQNames="true">
+    <variable name="NAME" expression="" defaultValue="&quot;Module&quot;" alwaysStopAt="true"/>
+    <variable name="A" expression="" defaultValue="&quot;Service&quot;" alwaysStopAt="true"/>
+    <variable name="B" expression="" defaultValue="&quot;ServiceImpl&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="SCALA" value="true"/>
+    </context>
+  </template>
+</templateSet>

@@ -1,0 +1,12 @@
+<html>
+<body>
+Reports <code>map</code> to a constant. Only offered when the constant is a stable value (literal, <code>val</code>, object, constructor of stable values), because <code>as</code> evaluates it eagerly.
+<p>Before:</p>
+<pre><code>fa.map(_ =&gt; 42)
+fa.void.as(42)
+fa *&gt; IO.pure(42)</code></pre>
+<p>After (quick fix <b>Replace with .as</b>):</p>
+<pre><code>fa.as(42)</code></pre>
+<p>Every rewrite is checked before it is offered: the replacement must resolve, have its implicits, and keep a compatible type. The quick fix adds the cats syntax import if needed.</p>
+</body>
+</html>

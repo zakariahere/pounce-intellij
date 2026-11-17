@@ -1,0 +1,12 @@
+<html>
+<body>
+Reports <code>map(f).flatten</code> and <code>flatMap(identity)</code> on effects.
+<p>Before:</p>
+<pre><code>fa.map(findUser).flatten
+ffa.flatMap(identity)</code></pre>
+<p>After (quick fix <b>Replace with .flatMap</b>):</p>
+<pre><code>fa.flatMap(findUser)
+ffa.flatten</code></pre>
+<p>Every rewrite is checked before it is offered: the replacement must resolve, have its implicits, and keep a compatible type. The quick fix adds the cats syntax import if needed.</p>
+</body>
+</html>

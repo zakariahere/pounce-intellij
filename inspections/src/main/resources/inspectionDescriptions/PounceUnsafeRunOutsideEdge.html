@@ -1,0 +1,10 @@
+<html>
+<body>
+Reports <code>unsafeRunSync</code>, <code>unsafeToFuture</code>, <code>unsafeRunAndForget</code> and the other <code>unsafe*</code> methods used in ordinary code. Effects should be run once, at the edge of the world.
+<p>Before:</p>
+<pre><code>def total: Int = repo.count.unsafeRunSync()</code></pre>
+<p>After:</p>
+<pre><code>def total: IO[Int] = repo.count   // run it from IOApp / the caller</code></pre>
+<p>Not reported (allowed edges): test sources, a <code>main</code> method, the arguments of Play's <code>Action.async</code> (so <code>Action.async(io.unsafeToFuture())</code> in a controller is fine), <code>ApplicationLifecycle.addStopHook</code>, Play filters / action builders / error handlers, Guice and Play DI modules (they run once at startup), and the classes and packages listed in <b>Settings | Pounce | unsafeRun allow-list</b>.</p>
+</body>
+</html>

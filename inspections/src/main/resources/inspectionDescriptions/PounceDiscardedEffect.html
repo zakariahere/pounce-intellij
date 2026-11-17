@@ -1,0 +1,21 @@
+<html>
+<body>
+Reports an effect value (<code>IO</code>, <code>Resource</code>, <code>EitherT</code>, <code>fs2.Stream</code>, or a
+tagless-final <code>F[A]</code>) that is computed and then thrown away. Effects are descriptions: one that is not
+sequenced into the result never runs. This is the most common cats-effect bug.
+<p>Before:</p>
+<pre><code>def greet: IO[Unit] = {
+  IO.println("Hello")   // never printed
+  IO.println("World")
+}</code></pre>
+<p>After (quick fix <b>Chain with the next statement using &gt;&gt;</b>):</p>
+<pre><code>def greet: IO[Unit] = {
+  IO.println("Hello") &gt;&gt; IO.println("World")
+}</code></pre>
+<p>An <code>if</code> without <code>else</code> also discards its effect; the quick fix rewrites it to
+<code>fa.whenA(condition)</code>. So does value discarding: <code>def log(): Unit = IO.println("a")</code> builds
+the <code>IO</code> and throws it away.</p>
+<p>Not reported: <code>Unit</code>-returning side effects, <code>Future</code> (eager, it runs anyway), the result
+expression of a block, and expressions whose type isn't a known effect.</p>
+</body>
+</html>

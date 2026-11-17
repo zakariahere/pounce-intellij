@@ -1,0 +1,12 @@
+<html>
+<body>
+Opt-in style (INFORMATION level, no highlighting): cats lift syntax instead of constructors, which types the value as <code>Either</code> / <code>Option</code> instead of <code>Right</code> / <code>Some</code>. Offered only where the expected type is <code>Either</code> / <code>Option</code>.
+<p>Before:</p>
+<pre><code>val r: Either[String, Int] = Right(1)
+val o: Option[Int] = Some(1)</code></pre>
+<p>After (quick fix <b>Replace with .asRight</b>):</p>
+<pre><code>val r: Either[String, Int] = 1.asRight[String]
+val o: Option[Int] = 1.some</code></pre>
+<p>Every rewrite is checked before it is offered: the replacement must resolve, have its implicits, and keep a compatible type. The quick fix adds the cats syntax import if needed.</p>
+</body>
+</html>

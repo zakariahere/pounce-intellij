@@ -1,0 +1,12 @@
+<html>
+<body>
+Explains a missing typeclass instance. For a tagless-final type parameter it says which bounds <code>F</code> has and offers to add or strengthen the bound on the declaring method or class.
+<p>Before:</p>
+<pre><code>def load[F[_]: Functor](id: Int): F[User] =
+  Monad[F].pure(User(id))      // No Monad[F] instance</code></pre>
+<p>After (quick fix <b>Strengthen bound to Monad</b>):</p>
+<pre><code>def load[F[_]: Monad](id: Int): F[User] =
+  Monad[F].pure(User(id))</code></pre>
+<p>A missing <code>IORuntime</code> gets a hint and <b>Import cats.effect.unsafe.implicits.global</b>; a missing <code>ExecutionContext</code> gets a hint. The related <b>Strengthen bound to Monad</b> fix also appears on the Scala plugin's own <i>Cannot resolve symbol flatMap</i> error when the bound is too weak for a cats method.</p>
+</body>
+</html>

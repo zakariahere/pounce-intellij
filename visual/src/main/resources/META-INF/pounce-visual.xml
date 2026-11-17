@@ -1,0 +1,60 @@
+<idea-plugin>
+    <!-- visual pillar (D): inlay hints, gutters, Typeclass Explorer, Combinator Finder, endpoints. -->
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- D1: for-comprehension lens -->
+        <codeInsight.declarativeInlayProvider language="Scala"
+                                              implementationClass="pounce.visual.hints.ForComprehensionInlayProvider"
+                                              isEnabledByDefault="true"
+                                              group="TYPES_GROUP"
+                                              providerId="pounce.for.comprehension"
+                                              bundle="messages.PounceVisualBundle"
+                                              nameKey="inlay.for.name"
+                                              descriptionKey="inlay.for.description"/>
+
+        <!-- D3: typeclass instances used by cats calls (gated by the Pounce "Instance hints" setting, off by default) -->
+        <codeInsight.declarativeInlayProvider language="Scala"
+                                              implementationClass="pounce.visual.hints.InstanceInlayProvider"
+                                              isEnabledByDefault="true"
+                                              group="PARAMETERS_GROUP"
+                                              providerId="pounce.instances"
+                                              bundle="messages.PounceVisualBundle"
+                                              nameKey="inlay.instances.name"
+                                              descriptionKey="inlay.instances.description"/>
+
+        <!-- D2: type aliases for effect stacks -->
+        <intentionAction>
+            <language>Scala</language>
+            <className>pounce.visual.intentions.IntroduceTypeAliasIntention</className>
+            <category>Pounce</category>
+        </intentionAction>
+        <intentionAction>
+            <language>Scala</language>
+            <className>pounce.visual.intentions.UseTypeAliasIntention</className>
+            <category>Pounce</category>
+        </intentionAction>
+
+        <!-- D4: gutters -->
+        <codeInsight.lineMarkerProvider language="Scala" implementationClass="pounce.visual.gutter.EffectLineMarkerProvider"/>
+        <codeInsight.lineMarkerProvider language="Scala" implementationClass="pounce.visual.gutter.TaglessWiringLineMarkerProvider"/>
+
+        <!-- D5 / D6 / D7: the Pounce tool window (Explorer, Combinator Finder, Endpoints) -->
+        <toolWindow id="Pounce" anchor="right" secondary="false" icon="AllIcons.Toolwindows.ToolWindowHierarchy"
+                    factoryClass="pounce.visual.toolwindow.PounceToolWindowFactory"/>
+
+        <!-- D6: fill ??? with a combinator -->
+        <intentionAction>
+            <language>Scala</language>
+            <className>pounce.visual.finder.FillHoleIntention</className>
+            <category>Pounce</category>
+        </intentionAction>
+    </extensions>
+
+    <actions>
+        <action id="Pounce.FindCombinator" class="pounce.visual.finder.FindCombinatorAction"
+                text="Pounce: Find Combinator"
+                description="Find a cats / cats-effect combinator from what you have to what you want (Hoogle-style)">
+            <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt shift K"/>
+            <add-to-group group-id="CodeMenu" anchor="last"/>
+        </action>
+    </actions>
+</idea-plugin>

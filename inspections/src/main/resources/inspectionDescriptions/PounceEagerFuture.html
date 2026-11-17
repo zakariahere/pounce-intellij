@@ -1,0 +1,10 @@
+<html>
+<body>
+Reports a <code>Future</code> that is already running when <code>IO.fromFuture</code> receives it: <code>IO.fromFuture(IO.pure(future))</code> or a <code>Future</code> created in a <code>val</code> outside the effect. The effect can then neither delay, retry nor cancel it.
+<p>Before:</p>
+<pre><code>IO.fromFuture(IO.pure(client.call()))</code></pre>
+<p>After (quick fix <b>Suspend the Future construction (IO(...) instead of IO.pure)</b>):</p>
+<pre><code>IO.fromFuture(IO(client.call()))</code></pre>
+<p>A <code>val f = client.call()</code> used once inside <code>IO(f)</code> gets <b>Move the Future construction inside the effect</b>. <code>IO(future)</code> that returns a <code>Future</code> nobody awaits is reported with <b>Wrap in IO.fromFuture</b>.</p>
+</body>
+</html>

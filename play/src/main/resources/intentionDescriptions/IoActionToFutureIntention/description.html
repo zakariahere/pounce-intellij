@@ -1,0 +1,9 @@
+<html>
+<body>
+Turns a Play action whose body produces an <code>IO[Result]</code> (or <code>F[Result]</code> with a
+<code>Dispatcher[F]</code> in scope) into the Play 3 bridge <code>Action.async { io.unsafeToFuture() }</code>.
+It uses the runtime the class already has: an implicit <code>IORuntime</code>, an injected
+<code>runtime: IORuntime</code> (passed explicitly) or a <code>Dispatcher</code>; otherwise it adds
+<code>import cats.effect.unsafe.implicits.global</code>.
+</body>
+</html>

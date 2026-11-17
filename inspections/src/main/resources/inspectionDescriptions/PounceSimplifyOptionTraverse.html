@@ -1,0 +1,11 @@
+<html>
+<body>
+Reports running an optional effect with <code>fold</code> / <code>getOrElse</code>.
+<p>Before:</p>
+<pre><code>maybeUser.fold(IO.unit)(save)
+maybeUser.map(save).getOrElse(IO.unit)</code></pre>
+<p>After (quick fix <b>Replace with .traverse_</b>):</p>
+<pre><code>maybeUser.traverse_(save)</code></pre>
+<p>Every rewrite is checked before it is offered: the replacement must resolve, have its implicits, and keep a compatible type. The quick fix adds the cats syntax import if needed.</p>
+</body>
+</html>

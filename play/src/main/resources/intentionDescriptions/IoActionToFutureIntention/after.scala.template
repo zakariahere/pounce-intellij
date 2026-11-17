@@ -1,0 +1,3 @@
+def show(id: Long) = Action.async { implicit request =>
+  <spot>users.find(id).map(u => Ok(u.name)).unsafeToFuture()</spot>
+}

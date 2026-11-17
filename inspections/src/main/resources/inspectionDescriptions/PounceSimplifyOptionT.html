@@ -1,0 +1,14 @@
+<html>
+<body>
+Reports verbose <code>OptionT</code> construction.
+<p>Before:</p>
+<pre><code>OptionT(IO.pure(Some(1)))
+OptionT(IO.pure(None))
+OptionT(io.map(Some(_)))</code></pre>
+<p>After (quick fix <b>Replace with OptionT.some</b>):</p>
+<pre><code>OptionT.some[IO](1)
+OptionT.none[IO, Int]
+OptionT.liftF(io)</code></pre>
+<p>Every rewrite is checked before it is offered: the replacement must resolve, have its implicits, and keep a compatible type. The quick fix adds the cats syntax import if needed.</p>
+</body>
+</html>

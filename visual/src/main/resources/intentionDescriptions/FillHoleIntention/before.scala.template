@@ -1,0 +1,1 @@
+def loadAll(ids: List[Int], find: Int => IO[User]): IO[List[User]] = <spot>???</spot>

@@ -1,0 +1,3 @@
+users.title=Users
+users.notFound=No user with id {0}
+users.renamed=User {0} renamed

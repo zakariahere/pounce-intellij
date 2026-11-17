@@ -1,0 +1,17 @@
+<html>
+<body>
+Reports for-comprehensions that do less than they look: a single generator (<code>fa</code> / <code>fa.map</code>), a later <code>x &lt;- F.pure(v)</code> (a plain <code>x = v</code>) and a later <code>_ &lt;- F.unit</code> (does nothing).
+<p>Before:</p>
+<pre><code>for {
+  u &lt;- findUser(1)
+  n &lt;- IO.pure(u.name)
+  _ &lt;- IO.unit
+} yield n</code></pre>
+<p>After (quick fix <b>Replace with a value definition</b>):</p>
+<pre><code>for {
+  u &lt;- findUser(1)
+  n = u.name
+} yield n</code></pre>
+<p>Every rewrite is checked before it is offered: the replacement must resolve, have its implicits, and keep a compatible type. The quick fix adds the cats syntax import if needed.</p>
+</body>
+</html>

@@ -1,0 +1,4 @@
+# Listed in the Pounce tool window > Endpoints.
+GET     /users              controllers.UserController.list
+GET     /users/:id          controllers.UserController.show(id: Long)
+POST    /users/:id/name     controllers.UserController.rename(id: Long, name: String)

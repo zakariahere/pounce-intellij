@@ -1,0 +1,14 @@
+Pounce — Cats, Cats Effect & Play 3 support for IntelliJ IDEA
+Copyright 2026 Pounce contributors
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+It includes software developed by others:
+
+* scala-plugin-testkit/ — the IntelliJ Scala plugin test framework, Copyright JetBrains s.r.o.,
+  Apache License 2.0 (https://github.com/JetBrains/intellij-scala), vendored via the zio-intellij
+  project (https://github.com/zio/zio-intellij, Apache License 2.0), which also inspired parts of
+  Pounce's architecture. Files adapted from zio-intellij carry an "Adapted from zio-intellij" comment.
+
+* Typesafe Config (com.typesafe:config), Copyright Lightbend, Inc., Apache License 2.0,
+  bundled in the plugin distribution as lib/typesafe-config.jar.

@@ -1,0 +1,10 @@
+<html>
+<body>
+Reports tuple-building by hand: <code>mapN((a, b) =&gt; (a, b))</code> is <code>tupled</code>; <code>product(...).map { case (a, b) =&gt; ... }</code> is <code>mapN</code>.
+<p>Before:</p>
+<pre><code>fa.product(fb).map { case (a, b) =&gt; a + b }</code></pre>
+<p>After (quick fix <b>Replace with .mapN</b>):</p>
+<pre><code>(fa, fb).mapN((a, b) =&gt; a + b)</code></pre>
+<p>Every rewrite is checked before it is offered: the replacement must resolve, have its implicits, and keep a compatible type. The quick fix adds the cats syntax import if needed.</p>
+</body>
+</html>

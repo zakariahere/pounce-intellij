@@ -1,0 +1,10 @@
+<html>
+<body>
+Reports a <code>Resource</code> whose acquired value is returned from <code>use</code> (<code>res.use(IO.pure)</code>, <code>res.use(x =&gt; IO.pure(x))</code>): by the time the caller gets it, the resource has been released. Also reports <code>res.allocated.map(_._1)</code>, which drops the release action.
+<p>Before:</p>
+<pre><code>val conn: IO[Connection] = pool.use(IO.pure)   // already closed</code></pre>
+<p>After:</p>
+<pre><code>pool.use(conn =&gt; runQueries(conn))</code></pre>
+<p>Plain data values (numbers, strings, <code>Unit</code>) are not reported: returning them from <code>use</code> is harmless.</p>
+</body>
+</html>

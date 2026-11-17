@@ -1,0 +1,10 @@
+<html>
+<body>
+Reports <code>flatMap</code> whose function ignores its argument. <code>&gt;&gt;</code> keeps <code>fb</code> lazy; <code>*&gt;</code> is offered when <code>fb</code> is a stable value.
+<p>Before:</p>
+<pre><code>fa.flatMap(_ =&gt; save(user))</code></pre>
+<p>After (quick fix <b>Replace with &gt;&gt;</b>):</p>
+<pre><code>fa &gt;&gt; save(user)</code></pre>
+<p>Every rewrite is checked before it is offered: the replacement must resolve, have its implicits, and keep a compatible type. The quick fix adds the cats syntax import if needed.</p>
+</body>
+</html>

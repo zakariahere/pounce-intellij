@@ -1,0 +1,47 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+    <id>dev.pounce</id>
+    <name>Pounce: Cats, Cats Effect &amp; Play for Scala</name>
+    <vendor>Pounce contributors</vendor>
+    <version>replaced-by-build</version>
+
+    <description><![CDATA[
+        Typelevel + Play superpowers for IntelliJ IDEA's Scala plugin.
+        <ul>
+          <li><b>Cats-aware completion</b>: syntax methods (traverse, mapN, asRight, ...) offered even when
+              <code>cats.syntax.all._</code> is not imported, filtered by the typeclass instances that actually exist.</li>
+          <li><b>Effect-safety inspections</b>: discarded IO values, nested effects, blocking calls in IO(...),
+              resources escaping <code>use</code>, tagless-final bound problems.</li>
+          <li><b>Simplifications</b>: <code>.map(_ =&gt; ())</code> to <code>.void</code>, <code>.map(f).sequence</code> to
+              <code>.traverse(f)</code>, and dozens more.</li>
+          <li><b>Visual layer</b>: for-comprehension effect hints, fork/blocking/resource gutters, Typeclass Explorer,
+              Combinator Finder.</li>
+          <li><b>Play 3</b>: config key completion &amp; navigation, Guice binding navigation, i18n messages, endpoints.</li>
+        </ul>
+        ]]></description>
+
+    <change-notes>replaced-by-build</change-notes>
+
+    <idea-version since-build="262.9437" until-build="262.*"/>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.java</depends>
+    <depends>org.intellij.scala</depends>
+
+    <resource-bundle>messages.PounceBundle</resource-bundle>
+
+    <!-- core: settings shared by every pillar -->
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="pounce.core.settings.PounceSettings"/>
+        <applicationConfigurable parentId="language" instance="pounce.core.settings.PounceConfigurable"
+                                 id="pounce.settings" displayName="Pounce"/>
+        <notificationGroup id="Pounce" displayType="BALLOON"/>
+    </extensions>
+
+    <!-- Each pillar registers its extensions in its own file (see <pillar>/src/main/resources/META-INF).
+         xi:fallback keeps a pillar testable on its own: its siblings are simply absent from its test artifact. -->
+    <xi:include href="/META-INF/pounce-completion.xml" xpointer="xpointer(/idea-plugin/*)"><xi:fallback/></xi:include>
+    <xi:include href="/META-INF/pounce-inspections.xml" xpointer="xpointer(/idea-plugin/*)"><xi:fallback/></xi:include>
+    <xi:include href="/META-INF/pounce-visual.xml" xpointer="xpointer(/idea-plugin/*)"><xi:fallback/></xi:include>
+    <xi:include href="/META-INF/pounce-play.xml" xpointer="xpointer(/idea-plugin/*)"><xi:fallback/></xi:include>
+    <xi:include href="/META-INF/pounce-runtime.xml" xpointer="xpointer(/idea-plugin/*)"><xi:fallback/></xi:include>
+</idea-plugin>

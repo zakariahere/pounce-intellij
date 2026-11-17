@@ -1,0 +1,16 @@
+<html>
+<body>
+Reports a for-comprehension generator whose effect differs from the comprehension's (an <code>Option</code> or <code>Either</code> step in an <code>IO</code> for-comprehension). Scala reports a confusing type mismatch on the desugared <code>flatMap</code>; this explains it and lifts the step.
+<p>Before:</p>
+<pre><code>for {
+  user &lt;- findUser(id)          // IO[User]
+  addr &lt;- user.address          // Option[Address]
+} yield addr</code></pre>
+<p>After (quick fix <b>Lift with IO.fromOption</b>):</p>
+<pre><code>for {
+  user &lt;- findUser(id)
+  addr &lt;- IO.fromOption(user.address)(new NoSuchElementException(&quot;user.address is empty&quot;))
+} yield addr</code></pre>
+<p>Other lifts: <code>IO.fromEither</code>, <code>IO.fromFuture(IO(...))</code>, <code>.liftTo[F]</code> for tagless code, <code>EitherT.right</code>, <code>OptionT.liftF</code> and <code>Stream.eval</code>. For a sequence of optional steps, consider <code>OptionT</code> / <code>EitherT</code>.</p>
+</body>
+</html>

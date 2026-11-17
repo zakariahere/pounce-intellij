@@ -1,0 +1,14 @@
+<html>
+<body>
+Reports <code>pure(())</code> and <code>IO(())</code>.
+<p>Before:</p>
+<pre><code>IO.pure(())
+F.pure(())
+IO(())</code></pre>
+<p>After (quick fix <b>Replace with .unit</b>):</p>
+<pre><code>IO.unit
+F.unit
+IO.unit</code></pre>
+<p>Every rewrite is checked before it is offered: the replacement must resolve, have its implicits, and keep a compatible type. The quick fix adds the cats syntax import if needed.</p>
+</body>
+</html>

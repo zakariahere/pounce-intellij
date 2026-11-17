@@ -1,0 +1,3 @@
+def show(id: Long) = Action { implicit request =>
+  <spot>users.find(id).map(u => Ok(u.name))</spot>
+}

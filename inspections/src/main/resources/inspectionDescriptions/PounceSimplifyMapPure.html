@@ -1,0 +1,10 @@
+<html>
+<body>
+Reports <code>flatMap</code> into <code>pure</code>, which is just <code>map</code>.
+<p>Before:</p>
+<pre><code>fa.flatMap(a =&gt; IO.pure(a + 1))</code></pre>
+<p>After (quick fix <b>Replace with .map</b>):</p>
+<pre><code>fa.map(a =&gt; a + 1)</code></pre>
+<p>Every rewrite is checked before it is offered: the replacement must resolve, have its implicits, and keep a compatible type. The quick fix adds the cats syntax import if needed.</p>
+</body>
+</html>

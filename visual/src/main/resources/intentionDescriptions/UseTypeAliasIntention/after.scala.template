@@ -1,0 +1,2 @@
+type AppIO[A] = EitherT[IO, AppError, A]
+def find(id: Int): <spot>AppIO[User]</spot> = ???

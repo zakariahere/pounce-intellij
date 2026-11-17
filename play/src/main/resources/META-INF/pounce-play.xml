@@ -1,0 +1,44 @@
+<idea-plugin>
+    <!-- play pillar (E): Play 3 config keys, Guice wiring, i18n messages, IO <-> Future bridge.
+         Included from the root plugin.xml. Every feature is gated by Libraries + PounceSettings at runtime. -->
+    <extensions defaultExtensionNs="com.intellij">
+
+        <!-- E1: config keys (application.conf + includes + library reference.conf) -->
+        <completion.contributor language="Scala" order="first"
+                                implementationClass="pounce.play.config.ConfKeyCompletionContributor"/>
+        <psi.referenceContributor language="Scala" implementation="pounce.play.config.ConfKeyReferenceContributor"/>
+        <localInspection language="Scala" shortName="PounceUnknownConfigKey" displayName="Unknown config key"
+                         groupPath="Scala,Pounce" groupName="Play" enabledByDefault="true" level="WARNING"
+                         implementationClass="pounce.play.config.UnknownConfigKeyInspection"/>
+
+        <!-- E3: i18n messages (conf/messages, conf/messages.xx, library messages.default) -->
+        <completion.contributor language="Scala" order="first"
+                                implementationClass="pounce.play.i18n.MessageKeyCompletionContributor"/>
+        <psi.referenceContributor language="Scala" implementation="pounce.play.i18n.MessageKeyReferenceContributor"/>
+        <localInspection language="Scala" shortName="PounceMissingMessageKey" displayName="Missing message key"
+                         groupPath="Scala,Pounce" groupName="Play" enabledByDefault="true" level="WARNING"
+                         implementationClass="pounce.play.i18n.MissingMessageKeyInspection"/>
+        <localInspection language="Scala" shortName="PounceMissingTranslation" displayName="Missing translation"
+                         groupPath="Scala,Pounce" groupName="Play" enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="pounce.play.i18n.MissingTranslationInspection"/>
+
+        <!-- E1 + E3: key -> usages from conf / messages files, Find Usages of keys -->
+        <gotoDeclarationHandler implementation="pounce.play.KeyUsagesGotoHandler"/>
+        <referencesSearch implementation="pounce.play.util.TextTargetReferencesSearcher"/>
+        <findUsagesHandlerFactory implementation="pounce.play.util.TextTargetFindUsagesHandlerFactory"/>
+
+        <!-- E2: Guice wiring gutters + unbound injection -->
+        <codeInsight.lineMarkerProvider language="Scala" implementationClass="pounce.play.guice.GuiceLineMarkerProvider"/>
+        <localInspection language="Scala" shortName="PounceUnboundInjection" displayName="Unbound Guice injection"
+                         groupPath="Scala,Pounce" groupName="Play" enabledByDefault="true" level="WARNING"
+                         implementationClass="pounce.play.guice.UnboundInjectionInspection"/>
+
+        <!-- E4: IO <-> Future bridge for Play actions -->
+        <intentionAction>
+            <language>Scala</language>
+            <className>pounce.play.bridge.IoActionToFutureIntention</className>
+            <category>Scala/Pounce</category>
+        </intentionAction>
+        <defaultLiveTemplates file="liveTemplates/PouncePlay"/>
+    </extensions>
+</idea-plugin>

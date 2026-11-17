@@ -1,0 +1,10 @@
+<html>
+<body>
+Reports <code>map</code> + <code>sequence</code> and the related shapes: <code>traverse(identity)</code> &rarr; <code>sequence</code>, <code>traverse(f).void</code> &rarr; <code>traverse_(f)</code>, the <code>par*</code> variants, and <code>sequence.map(_.flatten)</code> &rarr; <code>flatSequence</code>.
+<p>Before:</p>
+<pre><code>ids.map(findUser).sequence</code></pre>
+<p>After (quick fix <b>Replace with .traverse</b>):</p>
+<pre><code>ids.traverse(findUser)</code></pre>
+<p>Every rewrite is checked before it is offered: the replacement must resolve, have its implicits, and keep a compatible type. The quick fix adds the cats syntax import if needed.</p>
+</body>
+</html>

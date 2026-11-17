@@ -1,0 +1,12 @@
+<html>
+<body>
+Reports verbose <code>EitherT</code> construction. <code>EitherT.right[E]</code> is used instead of <code>EitherT.liftF</code> because <code>liftF</code> infers <code>E = Nothing</code> without an expected type.
+<p>Before:</p>
+<pre><code>EitherT(IO.pure(Right(1)))   // EitherT[IO, String, Int]
+EitherT(io.map(Right(_)))</code></pre>
+<p>After (quick fix <b>Replace with EitherT.rightT</b>):</p>
+<pre><code>EitherT.rightT[IO, String](1)
+EitherT.right[String](io)</code></pre>
+<p>Every rewrite is checked before it is offered: the replacement must resolve, have its implicits, and keep a compatible type. The quick fix adds the cats syntax import if needed.</p>
+</body>
+</html>

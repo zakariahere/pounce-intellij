@@ -1,0 +1,13 @@
+<html>
+<body>
+Reports hand-written error-handling combinators: <code>attempt.map(_.toOption)</code> &rarr; <code>option</code>, <code>handleErrorWith(e =&gt; F.pure(x))</code> &rarr; <code>handleError</code>, <code>attempt.map(_.fold(g, f))</code> and <code>map(f).handleError(g)</code> &rarr; <code>redeem</code>, <code>attempt.flatMap(...)</code> &rarr; <code>redeemWith</code>.
+<p>Before:</p>
+<pre><code>fa.attempt.flatMap {
+  case Left(e)  =&gt; recover(e)
+  case Right(a) =&gt; use(a)
+}</code></pre>
+<p>After (quick fix <b>Replace with .redeemWith</b>):</p>
+<pre><code>fa.redeemWith(e =&gt; recover(e), a =&gt; use(a))</code></pre>
+<p>Every rewrite is checked before it is offered: the replacement must resolve, have its implicits, and keep a compatible type. The quick fix adds the cats syntax import if needed.</p>
+</body>
+</html>
