@@ -35,12 +35,12 @@ Open `app/playground/Smells.scala`. Every method should be highlighted:
 | Method | Expect |
 |---|---|
 | `discarded` | Discarded effect: `IO.println` never runs |
-| `nested` | `IO[IO[Int]]`: quick fix *replace `map` with `flatMap`* |
+| `nested` | `map` builds an `IO[IO[Unit]]`, so the inner `IO.println` never runs: quick fix *Replace map with flatMap* |
 | `blocking` | `Thread.sleep` inside `IO(...)`: quick fix `IO.blocking` |
 | `edge` | `unsafeRunSync()` outside the edge of the world |
 | `eager` | `IO.fromFuture(IO.pure(running))`: the Future already started |
 | `leak` | `.start.void`: fiber started and forgotten |
-| `escaped` | `r.use(IO.pure)`: the value escapes after release |
+| `escaped` | `r.use(IO.pure)`: the `InputStream` is already closed when the caller gets it |
 | `simplify` | `io.map(_ => ())`: quick fix `io.void` |
 
 These must **not** be flagged. They are legitimate edges:
@@ -48,6 +48,9 @@ These must **not** be flagged. They are legitimate edges:
 - [ ] `unsafeToFuture()` in `app/controllers/UserController.scala`. Inside `Action.async` it's the intended Play bridge.
 - [ ] `unsafeRunSync()` in `app/modules/AppModule.scala`'s `userRepo`. Guice modules run once at startup.
 - [ ] Copy `def edge()` from `Smells` into `UserService` → it *is* flagged there.
+- [ ] Declare the nesting yourself, `def memo: IO[IO[Int]] = IO.pure(1).map(IO.pure)`: no *Nested effect*, because you
+      asked for `IO[IO[Int]]`. Likewise `r.use(IO.pure)` on a `Resource[IO, String]` is fine: a `String` holds
+      nothing that gets closed.
 
 Tagless bounds, in `UserService.scala`:
 
