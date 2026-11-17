@@ -169,8 +169,9 @@ sbt runPluginVerifier                           # against the target IDE build
   override-only / non-extendable misuse. Deprecated, experimental and internal API usages are reported but not fatal.
   Many of them are compiler-generated mixin forwarders (a Scala class implementing a Java interface gets a stub per
   default method), not calls in our code.
-- The plugin ID `dev.pounce` is permanent once published on the Marketplace. Marketplace IDs may not contain
-  "intellij".
+- The plugin ID `lu.zakaria.pounce` (the reverse DNS of the project site, pounce.zakaria.lu) is permanent once
+  published on the Marketplace. Marketplace IDs may not contain "intellij". IntelliJ identifies a plugin only by its
+  ID, so a build with another ID installs next to the old one instead of replacing it.
 
 ## Commit and PR conventions
 

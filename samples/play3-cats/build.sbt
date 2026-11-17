@@ -1,7 +1,7 @@
 // Pounce showcase: Scala 2.13 + Play 3 + cats-effect. Open this folder in an IDE that has Pounce installed
 // (or `sbt runIDE` from the plugin repo) and follow samples/play3-cats/README.md.
 ThisBuild / scalaVersion := "2.13.18"
-ThisBuild / organization := "dev.pounce.samples"
+ThisBuild / organization := "lu.zakaria.pounce.samples"
 
 lazy val root = (project in file("."))
   .enablePlugins(PlayScala)

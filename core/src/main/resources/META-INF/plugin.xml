@@ -1,7 +1,7 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-    <id>dev.pounce</id>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" url="https://pounce.zakaria.lu">
+    <id>lu.zakaria.pounce</id>
     <name>Pounce: Cats, Cats Effect &amp; Play for Scala</name>
-    <vendor>Pounce contributors</vendor>
+    <vendor url="https://pounce.zakaria.lu">Pounce contributors</vendor>
     <version>replaced-by-build</version>
 
     <description><![CDATA[

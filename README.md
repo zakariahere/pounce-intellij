@@ -1,6 +1,6 @@
 # Pounce 🐾
 
-**Cats, Cats Effect and Play 3 superpowers for IntelliJ IDEA.**
+**Cats, Cats Effect and Play 3 superpowers for IntelliJ IDEA.** 🌐 [pounce.zakaria.lu](https://pounce.zakaria.lu)
 
 Pounce brings typeclass-aware completion, effect-safety inspections, visual hints and Play 3 wiring to Scala
 projects. It aims to feel like IntelliJ's Spring support, but for Typelevel and Play code. It targets
