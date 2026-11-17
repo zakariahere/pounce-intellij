@@ -41,6 +41,55 @@ class QuickDocTest extends CompletionTestBase {
     assertTrue(html, html.contains("Constraints"))
   }
 
+  /**
+   * Under `import cats.syntax.all._` the Scala plugin already offers `traverse`. Pounce keeps that element (no
+   * duplicate) and explains it: the same tail text and quick documentation as its own items, without an import note.
+   */
+  def testImportedSyntaxIsExplained(): Unit = {
+    val names = complete(
+      """import cats.syntax.all._
+        |
+        |object Test {
+        |  val ids: List[Int] = List(1, 2)
+        |  def run = ids.trav<caret>
+        |}
+        |""".stripMargin
+    )
+    assertEquals(s"traverse once in $names", 1, names.count(_ == "traverse"))
+    val e = element("traverse")
+    assertTrue("the Scala plugin's element is kept", LensLookup.itemOf(e).isEmpty)
+    assertTrue("and explained by Pounce", LensLookup.explainedOf(e).isDefined)
+    val tail = presentation(e).getTailText
+    assertTrue(tail, tail.contains("Traverse[List] · cats"))
+    val html = docOf("traverse")
+    assertTrue(html, html.contains("Why here"))
+    assertTrue(html, html.contains("Traverse[List]"))
+    assertFalse("nothing to import", html.contains("added on insert"))
+  }
+
+  /** `NonEmptyList.traverse` is the type's own method, not cats syntax: it must not get the cats explanation. */
+  def testNativeMethodIsNotExplained(): Unit = {
+    complete(
+      """import cats.data.NonEmptyList
+        |import cats.syntax.all._
+        |
+        |object Test {
+        |  val ids: NonEmptyList[Int] = NonEmptyList.of(1, 2)
+        |  def run = ids.trav<caret>
+        |}
+        |""".stripMargin
+    )
+    val natives = lookupElements.filter(e => e.getLookupString == "traverse" && declaringClass(e).contains("cats.data.NonEmptyList"))
+    assertFalse(s"no native traverse in ${lookupElements.map(e => e.getLookupString -> declaringClass(e))}", natives.isEmpty)
+    natives.foreach(e => assertTrue(s"explained: ${presentation(e).getTailText}", LensLookup.explainedOf(e).isEmpty))
+  }
+
+  private def declaringClass(e: com.intellij.codeInsight.lookup.LookupElement): Option[String] =
+    Option(e.as(classOf[org.jetbrains.plugins.scala.lang.completion.lookups.ScalaLookupItem]))
+      .flatMap(i => Option(i.getPsiElement: com.intellij.psi.PsiElement))
+      .flatMap(p => Option(com.intellij.psi.util.PsiTreeUtil.getParentOfType(p, classOf[com.intellij.psi.PsiClass])))
+      .flatMap(c => Option(c.getQualifiedName))
+
   def testTaglessDocNamesTheBound(): Unit = {
     complete(
       """import cats.Monad

@@ -22,7 +22,7 @@ final class LensDocumentation extends LookupElementDocumentationTargetProvider {
 
   override def documentationTarget(file: PsiFile, element: LookupElement, offset: Int): DocumentationTarget =
     try {
-      LensLookup.itemOf(element) match {
+      LensLookup.itemOf(element).orElse(LensLookup.explainedOf(element)) match {
         case Some(item) => new LensDocTarget(item.lookupString, LensDocumentation.html(item, importNote(item, file, offset)))
         case None =>
           LensLookup.curatedOf(element) match {

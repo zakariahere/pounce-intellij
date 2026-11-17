@@ -47,20 +47,23 @@ final class CatsLensContributor extends CompletionContributor {
   }
 
   private def run(parameters: CompletionParameters, result: CompletionResultSet, plan: LensPlanner.Plan): Unit = {
-    val ourNames = plan.items.map(_.lookupString).toSet
-    val seen     = mutable.HashSet.empty[String]
+    val ours = plan.items.groupBy(_.lookupString).view.mapValues(_.maxBy(_.priority)).toMap
+    val seen = mutable.HashSet.empty[String]
     result.runRemainingContributors(
       parameters,
       (r: CompletionResult) => {
         val element = r.getLookupElement
         val name    = element.getLookupString
-        if (ourNames.contains(name) && isNotImportedGlobalMember(element)) {
+        if (ours.contains(name) && isNotImportedGlobalMember(element)) {
           // the Scala plugin's "import implicit conversion" item; ours adds the import in the project's style
         } else {
           seen += name
-          plan.curated.get(name) match {
-            case Some(op) => result.passResult(r.withLookupElement(LensLookup.decorate(element, op)))
-            case None     => result.passResult(r)
+          (plan.curated.get(name), ours.get(name)) match {
+            case (Some(op), _) => result.passResult(r.withLookupElement(LensLookup.decorate(element, op)))
+            // the syntax is already imported: keep the Scala plugin's item, give it Pounce's tail text and docs
+            case (None, Some(item)) if isCatsSyntaxMember(element) =>
+              result.passResult(r.withLookupElement(LensLookup.explain(element, item)))
+            case _ => result.passResult(r)
           }
         }
       }
@@ -70,6 +73,18 @@ final class CatsLensContributor extends CompletionContributor {
 
   private def isNotImportedGlobalMember(element: LookupElement): Boolean =
     Option(element.as(classOf[ScalaLookupItem])).exists(_.shouldImport)
+
+  /**
+   * The Scala plugin's item is a member of a cats syntax class (`cats.Traverse.Ops`, `cats.syntax.OptionIdOps`), not a
+   * method the receiver's own type declares (`NonEmptyList.traverse`, `IO.void`): only then is Pounce's explanation
+   * ("Traverse[List] · cats") about the same method.
+   */
+  private def isCatsSyntaxMember(element: LookupElement): Boolean =
+    Option(element.as(classOf[ScalaLookupItem]))
+      .flatMap(i => Option(i.getPsiElement: com.intellij.psi.PsiElement))
+      .flatMap(e => Option(com.intellij.psi.util.PsiTreeUtil.getParentOfType(e, classOf[com.intellij.psi.PsiClass])))
+      .flatMap(c => Option(c.getQualifiedName))
+      .exists(LensPlanner.isCatsSyntaxClass)
 }
 
 /** Decides what the Cats Lens offers at a `qualifier.<caret>` position. */
@@ -77,6 +92,10 @@ object LensPlanner {
 
   /** @param items our lookup items @param curated Scala-plugin items to decorate (name → catalog op) */
   final case class Plan(items: Seq[LensItem], curated: Map[String, Op])
+
+  /** `cats.Traverse.Ops`, `cats.syntax.EitherIdOps`, `cats.effect.syntax.GenSpawnOps`: classes that provide syntax. */
+  def isCatsSyntaxClass(fqn: String): Boolean =
+    fqn.startsWith("cats.") && (fqn.contains(".syntax.") || fqn.endsWith("Ops"))
 
   def plan(parameters: CompletionParameters, prefix: PrefixMatcher): Option[Plan] = {
     val settings = PounceSettings()

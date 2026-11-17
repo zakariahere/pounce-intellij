@@ -17,8 +17,8 @@ Then work through the checklist below.
 In `app/domain/UserService.scala`:
 
 - [ ] In `findAll`, delete `traverse(repo.find)` and type `ids.` → `traverse`, `foldMapM`, `traverseFilter`… are
-      offered, each with ` Traverse[List] · cats` as tail text. Remove `import cats.syntax.all._` and pick one again:
-      the import comes back.
+      offered, each with ` Traverse[List] · cats-core` as tail text, and **Ctrl+Q** explains why it applies. Remove
+      `import cats.syntax.all._` and pick one again: the import comes back, and the quick doc announces it first.
 - [ ] Type `repo.find(id).` → `flatTap`, `void`, `as`… are offered because `F[_]: Sync` is in scope. `attempt` comes
       through `Sync`'s `MonadThrow`.
 - [ ] Type `(repo.find(1), repo.find(2)).` → `mapN`, `tupled`, `parMapN`.

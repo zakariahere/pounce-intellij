@@ -41,25 +41,47 @@ object LensLookup {
     }
   }
 
-  /** The Pounce item behind a lookup element (through any decorators), if it is one. */
+  /**
+   * Wraps the Scala plugin's element for cats syntax that is already imported (`ids.traverse` under
+   * `import cats.syntax.all._`). Pounce does not add a duplicate item then, so this element carries Pounce's
+   * presentation (compact parameters + ` Traverse[List] · cats`) and its quick documentation. Insertion stays the
+   * Scala plugin's: nothing needs importing.
+   */
+  def explain(element: LookupElement, item: LensItem): LookupElement = new ExplainedLookupElement(element, item)
+
+  final class ExplainedLookupElement(delegate: LookupElement, val item: LensItem) extends LookupElementDecorator[LookupElement](delegate) {
+    override def renderElement(presentation: LookupElementPresentation): Unit = {
+      super.renderElement(presentation)
+      // The Scala plugin's tail is the full signature (`[G[_], B](f: Long => G[B])(implicit ev$1: Applicative[G])`),
+      // which the popup truncates, so the explanation appended after it would never be visible.
+      presentation.setTailText(item.paramsText, false)
+      presentation.appendTailText("  " + item.constraintsText, true)
+    }
+  }
+
+  /** The Pounce item behind a lookup element Pounce created, if it is one (not an explained Scala-plugin element). */
   def itemOf(element: LookupElement): Option[LensItem] =
     element.getObject match {
       case i: LensItem => Some(i)
       case _           => None
     }
 
-  /** The curated op behind a decorated Scala-plugin element, if any. */
-  def curatedOf(element: LookupElement): Option[Op] = {
-    var e: LookupElement = element
-    while (e != null) {
-      e match {
-        case c: CuratedLookupElement => return Some(c.op)
-        case d: LookupElementDecorator[?] => e = d.getDelegate
-        case _ => e = null
-      }
-    }
-    None
+  /** The Pounce item explaining a Scala-plugin element for already-imported cats syntax, if any. */
+  def explainedOf(element: LookupElement): Option[LensItem] = decorators(element).collectFirst {
+    case x: ExplainedLookupElement => x.item
   }
+
+  /** The curated op behind a decorated Scala-plugin element, if any. */
+  def curatedOf(element: LookupElement): Option[Op] = decorators(element).collectFirst {
+    case c: CuratedLookupElement => c.op
+  }
+
+  /** The element and every element it decorates, outermost first. */
+  private def decorators(element: LookupElement): Iterator[LookupElement] =
+    Iterator.iterate(element) {
+      case d: LookupElementDecorator[?] => d.getDelegate
+      case _                            => null
+    }.takeWhile(_ != null)
 
   /** Adds the imports an item needs. Must run in a write action with a committed document. */
   def addImports(item: LensItem, place: PsiElement): Unit = {

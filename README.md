@@ -19,7 +19,8 @@ projects. It aims to feel like IntelliJ's Spring support, but for Typelevel and 
 - **Cats syntax without imports.** Type `ids.` on a `List[Int]` and get `traverse`, `foldMapM`, `traverseFilter`…
   - Only operations whose instances exist for that type are offered, and that includes `F[_]: Monad` bounds in tagless code.
   - Picking one adds the import in your project's style (`cats.syntax.all._`, `cats.implicits._` or granular imports).
-  - The popup shows why an item applies, e.g. ` Traverse[List] · cats`.
+  - The popup shows why an item applies, e.g. ` Traverse[List] · cats-core`, and Ctrl+Q explains it. This works
+    whether or not the syntax is already imported.
 - **Tuples:** `(fa, fb).mapN((a, b) => …)`, `parMapN`, `tupled`, `flatMapN`, with the right arity.
 - **Lifts ranked by expected type:** `.asRight[String]`, `.some`, `.pure[F]`, `.raiseError[F, A]`, `.validNel`…
 - **Smart completion** (Ctrl+Shift+Space):
