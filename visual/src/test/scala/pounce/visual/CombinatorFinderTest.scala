@@ -1,7 +1,8 @@
 package pounce.visual
 
+import com.intellij.openapi.application.ReadAction
 import org.junit.Assert.*
-import pounce.visual.finder.{CombinatorFinder, FinderPrefill}
+import pounce.visual.finder.{CombinatorFinder, FinderPrefill, HoleFiller}
 import pounce.visual.toolwindow.{EndpointsPanel, FinderPanel}
 
 import scala.jdk.CollectionConverters.*
@@ -112,6 +113,46 @@ class CombinatorFinderTest extends VisualTestBase {
         |""".stripMargin
     )
   }
+
+  /**
+   * `F[_]: Sync` fixes the error type to `Throwable`, so a repository is no error to raise. Seen by hand in the
+   * sample: `repo.raiseError` and `ApplicativeError[F].raiseError(repo)` were ranked above `ids.traverse(???)`.
+   */
+  def testFillHoleRaisesOnlyThrowables(): Unit = {
+    configureFromFileText(
+      """import cats.effect.Sync
+        |trait Repo[F[_]] { def find(id: Long): F[Option[String]] }
+        |final class Svc[F[_]: Sync](repo: Repo[F]) {
+        |  def all(ids: List[Long]): F[List[Option[String]]] = <caret>???
+        |}
+        |""".stripMargin
+    )
+    val found = fillCandidates()
+    assertFalse(found.toString, found.exists(_.contains("raiseError")))
+    assertFalse(found.toString, found.exists(_.contains("liftTo")))
+    assertEquals(found.toString, "ids.traverse(???)", found.head)
+  }
+
+  /** The class check must not reject a user exception that the static name rules cannot recognise. */
+  def testFillHoleStillRaisesAUserException(): Unit = {
+    configureFromFileText(
+      """import cats.effect.Sync
+        |final class AppFailure(msg: String) extends RuntimeException(msg)
+        |final class Svc[F[_]: Sync] {
+        |  def fail(err: AppFailure): F[Int] = <caret>???
+        |}
+        |""".stripMargin
+    )
+    val found = fillCandidates()
+    assertTrue(found.toString, found.exists(_.startsWith("err.raiseError")))
+  }
+
+  private def fillCandidates(): Seq[String] =
+    ReadAction.compute[Seq[String], RuntimeException] { () =>
+      val element = getFile.findElementAt(getEditor.getCaretModel.getOffset)
+      val hole    = HoleFiller.holeAt(element).getOrElse(fail("no ??? at the caret").asInstanceOf[Nothing])
+      HoleFiller.candidates(hole).map(_.expression)
+    }
 
   def testNoFillWithoutMatchingValues(): Unit = {
     configureFromFileText(

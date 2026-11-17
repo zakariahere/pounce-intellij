@@ -1,6 +1,7 @@
 package pounce.visual.finder
 
-import com.intellij.psi.PsiElement
+import com.intellij.psi.util.InheritanceUtil
+import com.intellij.psi.{JavaPsiFacade, PsiElement}
 import org.jetbrains.plugins.scala.extensions.*
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScReferencePattern
 import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScBlock, ScExpression, ScFunctionExpr, ScReferenceExpression}
@@ -10,7 +11,8 @@ import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScClass
 import org.jetbrains.plugins.scala.lang.psi.types.ScType
 import pounce.core.catalog.Catalog
 import pounce.core.types.{ScTypeBridge, Ty}
-import pounce.core.{InstanceOracle, StaticInstances}
+import pounce.core.StaticInstances.Answer
+import pounce.core.InstanceOracle
 import pounce.visual.finder.CombinatorFinder.{Have, Match}
 import pounce.visual.util.VisualPsi
 
@@ -70,13 +72,24 @@ object HoleFiller {
       if (values.isEmpty) Nil
       else {
         val oracle = InstanceOracle(hole)
-        val has: CombinatorFinder.Has = (tc, t) =>
-          VisualPsi.safe(oracle.has(tc, t)).getOrElse(StaticInstances.Answer.Unknown)
+        val has: CombinatorFinder.Has = (tc, t) => VisualPsi.safe(oracle.has(tc, t)).getOrElse(Answer.Unknown)
+        val known = scala.collection.mutable.HashMap.empty[String, Answer]
+        val isThrowable: CombinatorFinder.IsThrowable = {
+          case t @ Ty.Con(_, _, fqn, false) if fqn.nonEmpty =>
+            known.getOrElseUpdate(fqn, VisualPsi.safe(throwableClass(hole, fqn)).flatten.getOrElse(CombinatorFinder.staticThrowable(t)))
+          case t => CombinatorFinder.staticThrowable(t)
+        }
         CombinatorFinder
-          .searchValues(values.toList, want, Catalog.bundled, has)
+          .searchValues(values.toList, want, Catalog.bundled, has, isThrowable = isThrowable)
           .filter(_.usedHave > 0)
           .sortBy(m => (m.holes.size, -m.score))
           .take(limit)
       }
+    }
+
+  /** Yes / No from the class hierarchy; None when the class is not found (the name rules decide then). */
+  private def throwableClass(place: PsiElement, fqn: String): Option[Answer] =
+    Option(JavaPsiFacade.getInstance(place.getProject).findClass(fqn, place.getResolveScope)).map { cls =>
+      if (fqn == "java.lang.Throwable" || InheritanceUtil.isInheritor(cls, "java.lang.Throwable")) Answer.Yes else Answer.No
     }
 }

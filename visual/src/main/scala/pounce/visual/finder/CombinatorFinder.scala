@@ -30,6 +30,12 @@ object CombinatorFinder {
 
   type Has = (String, Ty) => Answer
 
+  /** Is a type a `Throwable`? The IDE answers from the class hierarchy; [[staticThrowable]] goes by name only. */
+  type IsThrowable = Ty => Answer
+
+  /** Name rules only: Yes for `Throwable` / `*Exception`, No for library types, Unknown for user classes. */
+  val staticThrowable: IsThrowable = t => throwable(t)
+
   /** Static-table instance check, for use without a PSI context. */
   val staticHas: Has = (tc, t) => {
     val c = Typeclasses.canonical(tc).getOrElse(tc)
@@ -54,12 +60,20 @@ object CombinatorFinder {
 
   private val MaxHoles = 2
 
-  def search(have: List[Have], want: Ty, catalog: Catalog = Catalog.bundled, has: Has = staticHas, limit: Int = 40, compositions: Boolean = true): Seq[Match] = {
+  def search(
+    have: List[Have],
+    want: Ty,
+    catalog: Catalog = Catalog.bundled,
+    has: Has = staticHas,
+    limit: Int = 40,
+    compositions: Boolean = true,
+    isThrowable: IsThrowable = staticThrowable
+  ): Seq[Match] = {
     val ops    = catalog.ops.filter(_.asFunction.isDefined)
-    val direct = ops.flatMap(op => directMatches(op, have, want, has, mustUseAll = have.nonEmpty, maxHoles = MaxHoles))
+    val direct = ops.flatMap(op => directMatches(op, have, want, has, isThrowable, mustUseAll = have.nonEmpty, maxHoles = MaxHoles))
     val composed =
       if (!compositions || have.isEmpty) Nil
-      else ops.flatMap(op2 => composedMatches(op2, ops, have, want, has))
+      else ops.flatMap(op2 => composedMatches(op2, ops, have, want, has, isThrowable))
     (direct ++ composed)
       .groupBy(_.expression)
       .values
@@ -108,10 +122,17 @@ object CombinatorFinder {
    * Like [[search]] but the values are optional candidates (the hole filler: any of the values in scope may be used,
    * at most one hole left), without compositions.
    */
-  def searchValues(values: List[Have], want: Ty, catalog: Catalog, has: Has, limit: Int = 40): Seq[Match] =
+  def searchValues(
+    values: List[Have],
+    want: Ty,
+    catalog: Catalog,
+    has: Has,
+    limit: Int = 40,
+    isThrowable: IsThrowable = staticThrowable
+  ): Seq[Match] =
     catalog.ops
       .filter(_.asFunction.isDefined)
-      .flatMap(op => directMatches(op, values, want, has, mustUseAll = false, maxHoles = 1))
+      .flatMap(op => directMatches(op, values, want, has, isThrowable, mustUseAll = false, maxHoles = 1))
       .groupBy(_.expression)
       .values
       .map(_.maxBy(_.score))
@@ -119,13 +140,13 @@ object CombinatorFinder {
       .sortBy(m => (-m.score, m.expression.length, m.expression))
       .take(limit)
 
-  private def directMatches(op: Op, have: List[Have], want: Ty, has: Has, mustUseAll: Boolean, maxHoles: Int): Seq[Match] = {
+  private def directMatches(op: Op, have: List[Have], want: Ty, has: Has, isThrowable: IsThrowable, mustUseAll: Boolean, maxHoles: Int): Seq[Match] = {
     val (ins, out) = fresh(op, "'")
     if (tooGeneral(out) || resultPolymorphic(op)) return Nil
     Ty.unify(out, want).toSeq.flatMap { s0 =>
       assignments(ins, have, s0, mustUseAll, minUsed = if (have.isEmpty) 0 else 1, maxHoles).flatMap { case (args, s) =>
         val holes = ins.zip(args).collect { case (t, None) => s(t) }
-        constraints(op, "'", s, has).map { answer =>
+        constraints(op, "'", s, has, isThrowable).map { answer =>
           val used  = args.count(_.isDefined)
           val score = used * 100 - holes.size * 25 + op.rank + (if (answer == Answer.Yes) 10 else 0)
           Match(List(Step(op, args)), holes, used, answer, score, render(op, args, s, "'"))
@@ -134,7 +155,7 @@ object CombinatorFinder {
     }
   }
 
-  private def composedMatches(op2: Op, ops: Seq[Op], have: List[Have], want: Ty, has: Has): Seq[Match] = {
+  private def composedMatches(op2: Op, ops: Seq[Op], have: List[Have], want: Ty, has: Has, isThrowable: IsThrowable): Seq[Match] = {
     val (ins2, out2) = fresh(op2, "²")
     if (tooGeneral(out2) || ins2.isEmpty || op2.kind == OpKind.Companion || resultPolymorphic(op2)) return Nil
     Ty.unify(out2, want).toSeq.flatMap { s2 =>
@@ -154,8 +175,8 @@ object CombinatorFinder {
                 if (holes1.size + holes2.size > MaxHoles || args1.headOption.flatten.isEmpty) Nil
                 else
                   for {
-                    a1 <- constraints(op1, "¹", s1b, has)
-                    a2 <- constraints(op2, "²", s1b, has)
+                    a1 <- constraints(op1, "¹", s1b, has, isThrowable)
+                    a2 <- constraints(op2, "²", s1b, has, isThrowable)
                   } yield {
                     val answer = a1 && a2
                     val expr1  = render(op1, args1, s1b, "¹")
@@ -199,7 +220,7 @@ object CombinatorFinder {
   }
 
   /** Checks `requires` for variables bound by the match. `No` rejects; unbound variables are not checked. */
-  private def constraints(op: Op, suffix: String, s: Ty.Subst, has: Has): Option[Answer] = {
+  private def constraints(op: Op, suffix: String, s: Ty.Subst, has: Has, isThrowable: IsThrowable): Option[Answer] = {
     val answers = op.requires.flatMap { case (v, tc) =>
       val bound = s(Ty.Var(v + suffix))
       bound match {
@@ -213,7 +234,7 @@ object CombinatorFinder {
           Some(has(tc, subject))
       }
     }
-    val answer = (answers :+ errorType(op, suffix, s)).foldLeft(Answer.Yes)(_ && _)
+    val answer = (answers :+ errorType(op, suffix, s, has, isThrowable)).foldLeft(Answer.Yes)(_ && _)
     Option.when(answer != Answer.No)(answer)
   }
 
@@ -225,6 +246,12 @@ object CombinatorFinder {
   private val Throwing    = Set("IO", "SyncIO", "Future", "Try", "Resource", "Stream")
   private val Transformers = Set("Kleisli", "OptionT", "StateT", "IndexedStateT", "WriterT", "ReaderT")
 
+  /**
+   * Bounds that fix a tagless `F`'s error type to `Throwable`: `Sync[F]` is a `MonadCancel[F, Throwable]` and
+   * `Spawn[F]` (so `Concurrent`, `Temporal`, `Async`) a `GenSpawn[F, Throwable]`.
+   */
+  private val ThrowableBounds = List("Sync", "Spawn")
+
   /** The variable naming the effect whose error type `E` must be: `F` of `requires { F = ApplicativeError }`. */
   private def errorEffectVar(op: Op): Option[String] =
     op.requires
@@ -235,8 +262,12 @@ object CombinatorFinder {
    * `raiseError` / `liftTo` / `attempt` / `handleError`: `ApplicativeError[F, E]` only exists for F's own error type
    * (`Throwable` for IO, `L` for `Either[L, *]` / `EitherT[M, L, *]`). Without this check `xs.raiseError` would
    * match every wanted `F[A]`, since its receiver is a bare `E`.
+   *
+   * A tagless `F` has no error type of its own. With a `Sync` / `Spawn` bound it is `Throwable`, so `isThrowable`
+   * may reject a user class (`repo.raiseError`). Without one, `MonadError[F, AppError]` is possible and only the
+   * name rules apply, which reject library types but never a user class.
    */
-  private def errorType(op: Op, suffix: String, s: Ty.Subst): Answer =
+  private def errorType(op: Op, suffix: String, s: Ty.Subst, has: Has, isThrowable: IsThrowable): Answer =
     errorEffectVar(op) match {
       case None => Answer.Yes
       case Some(fVar) =>
@@ -244,13 +275,18 @@ object CombinatorFinder {
           case (Ty.Var(_), _) | (_, Ty.Var(_)) => Answer.Yes
           case (f, e) =>
             errorTypeOf(asConstructor(f)) match {
-              case Some(ThrowableTy)                                  => throwable(e)
+              case Some(ThrowableTy)                                  => isThrowable(e)
               case Some(expected) if Ty.unify(expected, e).isDefined => Answer.Yes
               case Some(_)                                            => Answer.No
-              case None                                               => if (isRigid(e)) Answer.Unknown else throwable(e)
+              case None if isRigid(e)                                 => Answer.Unknown
+              case None if throwsThrowable(f, has)                    => isThrowable(e)
+              case None                                               => throwable(e)
             }
         }
     }
+
+  private def throwsThrowable(f: Ty, has: Has): Boolean =
+    ThrowableBounds.exists(tc => has(tc, asConstructor(f)) == Answer.Yes)
 
   private def errorTypeOf(f: Ty): Option[Ty] = f match {
     case Ty.Lambda(n, _, _, false) if Throwing(n)                => Some(ThrowableTy)
