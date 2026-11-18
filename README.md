@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="core/src/main/resources/META-INF/pluginIcon_dark.svg">
+    <img src="core/src/main/resources/META-INF/pluginIcon.svg" width="112" height="112" alt="Pounce logo: a paw print between code braces">
+  </picture>
+</p>
+
 # Pounce 🐾
 
 **Cats, Cats Effect and Play 3 superpowers for IntelliJ IDEA.** 🌐 [pounce.zakaria.lu](https://pounce.zakaria.lu)
