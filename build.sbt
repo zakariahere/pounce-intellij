@@ -59,6 +59,9 @@ lazy val core =
     .enablePlugins(SbtIdeaPlugin)
     .settings(
       pluginXmlPatch,
+      // Patch the copied plugin.xml, never before the copy: on a clean build copyResources would otherwise overwrite
+      // the stamped file with the raw one (`<version>replaced-by-build</version>` in the released zip).
+      doPatchPluginXml := doPatchPluginXml.dependsOn(Compile / copyResources).value,
       packageMethod := PackagingMethod.MergeIntoParent(),
       libraryDependencies += Dependencies.typesafeConfig,
       packageLibraryMappings += "com.typesafe" % "config" % ".*" -> Some("lib/typesafe-config.jar")
