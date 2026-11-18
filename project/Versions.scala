@@ -17,7 +17,11 @@ object Versions {
   /** Last Scala plugin release compatible with 262.9437 (2026.2.20+ need 262.10315). */
   val scalaPluginVersion: String = "2026.2.18"
 
-  val pluginVersion: String = "0.1.0-SNAPSHOT"
+  /**
+   * Local builds are snapshots. The release workflow (.github/workflows/release.yml) sets POUNCE_VERSION from the git
+   * tag: `v0.2.0` builds 0.2.0.
+   */
+  val pluginVersion: String = sys.env.get("POUNCE_VERSION").filter(_.trim.nonEmpty).getOrElse("0.1.0-SNAPSHOT")
 
   lazy val (
     intellijVersion_ForManagedIntellijDependencies,

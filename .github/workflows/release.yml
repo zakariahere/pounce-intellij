@@ -1,0 +1,94 @@
+# Builds the plugin zip and publishes it as a GitHub Release when a version tag is pushed.
+#
+#   git tag v0.2.0;        git push origin v0.2.0         -> release 0.2.0, marked "Latest"
+#   git tag v0.2.0-beta.1; git push origin v0.2.0-beta.1  -> pre-release (anything with a "-" suffix:
+#                                                            -beta.N, -rc.N, -SNAPSHOT, ...)
+#
+# Re-running the workflow for the same tag replaces the zip on the existing release.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Version from tag
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then
+            echo "::error::Tag '$TAG' is not vX.Y.Z or vX.Y.Z-suffix"
+            exit 1
+          fi
+          if [[ "$VERSION" == *-* ]]; then KIND=prerelease; else KIND=release; fi
+          echo "POUNCE_VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "RELEASE_KIND=$KIND" >> "$GITHUB_ENV"
+          echo "Building $VERSION ($KIND)"
+
+      # IntelliJ 2026.2's jars are Java 25 class files.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: sbt
+
+      - uses: sbt/setup-sbt@v1
+
+      # The IntelliJ SDK (~1.5 GB) that sbt-idea-plugin downloads into ~/.pouncePluginIU.
+      - uses: actions/cache@v4
+        with:
+          path: ~/.pouncePluginIU
+          key: intellij-sdk-${{ hashFiles('project/Versions.scala', 'project/plugins.sbt') }}
+          restore-keys: intellij-sdk-
+
+      - name: Package plugin zip
+        run: sbt -batch packageArtifactZip
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ZIP="target/pounce-${POUNCE_VERSION}.zip"
+          test -f "$ZIP" || { echo "::error::$ZIP not found"; ls -la target; exit 1; }
+
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "$ZIP" --clobber
+            exit 0
+          fi
+
+          if [[ "$RELEASE_KIND" == prerelease ]]; then
+            FLAGS=(--prerelease --latest=false); TITLE="Pounce ${POUNCE_VERSION} (preview)"
+          else
+            FLAGS=(--latest); TITLE="Pounce ${POUNCE_VERSION}"
+          fi
+
+          cat > notes.md <<EOF
+          Pounce: Cats, Cats Effect and Play 3 support for IntelliJ IDEA. 🌐 [pounce.zakaria.lu](https://pounce.zakaria.lu)
+
+          ## Install
+          1. Download \`pounce-${POUNCE_VERSION}.zip\` below.
+          2. In IntelliJ IDEA: **Settings → Plugins → ⚙ → Install Plugin from Disk…**, pick the zip, restart.
+
+          **Requires** IntelliJ IDEA **2026.2** (build 262.9437 or newer, up to 262.\*) with the **Scala plugin** installed.
+
+          EOF
+
+          gh release create "$GITHUB_REF_NAME" "$ZIP" \
+            --title "$TITLE" \
+            --notes-file notes.md \
+            --generate-notes \
+            --verify-tag \
+            "${FLAGS[@]}"
