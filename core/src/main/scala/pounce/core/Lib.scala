@@ -5,6 +5,8 @@ package pounce.core
  * tool names its library entries (sbt, BSP, Bazel, Maven, Gradle) and in light test fixtures.
  */
 enum Lib(val displayName: String, val markerClasses: List[String]) {
+  /** The Scala standard library: always there, used for stdlib syntax such as `5.seconds`. */
+  case ScalaLibrary extends Lib("scala", List("scala.concurrent.duration.Duration"))
   case CatsCore   extends Lib("cats-core", List("cats.Functor"))
   case CatsEffect extends Lib("cats-effect", List("cats.effect.IO", "cats.effect.kernel.Sync"))
   case Fs2        extends Lib("fs2", List("fs2.Stream"))

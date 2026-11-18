@@ -61,7 +61,7 @@ those variables need:
 | `name`, `owner` | Method name and the typeclass/companion that defines it. `id` defaults to `owner.name` |
 | `kind` | `syntax` (extension on `F[A]`), `lift` (extension on any value), `tuple`, `method`, `companion`. Usually set once at the top of the file |
 | `variant = summoner` | A typeclass member called through its summoner (`Sync[F].delay`, `Spawn[F].start`). `F = <owner>` is implied, so you don't write that `requires` yourself |
-| `syntax` | The cats syntax module that provides it (`functor` → `cats.syntax.functor._`; `effect.spawn` → `cats.effect.syntax.spawn._`). Used for auto-imports |
+| `syntax` | The cats syntax module that provides it (`functor` → `cats.syntax.functor._`; `effect.spawn` → `cats.effect.syntax.spawn._`), or a full package root imported as-is (`scala.concurrent.duration` → `scala.concurrent.duration._`). Used for auto-imports |
 | `receiver` / `params` / `result` | The shape. Partial unification works: `F[A]` matches `Either[String, Int]` with `F = Either[String, *]` |
 | `requires` | Typeclass constraints on shape variables. Must be names known to `core/.../Typeclasses.scala` |
 | `rank` | 0–100. Higher ranks are offered first |

@@ -24,15 +24,26 @@ object Imports {
 
   private def isEffectSyntax(syntax: String) = syntax.startsWith("effect.")
 
+  /**
+   * A full package root rather than a cats syntax module: `scala.concurrent.duration` (for `5.seconds`). Cats modules
+   * are bare (`traverse`) or `effect.`-prefixed (`effect.spawn`); anything else with a dot is a root, imported as-is
+   * whatever the import style.
+   */
+  def isPackageRoot(syntax: String): Boolean = syntax.contains('.') && !isEffectSyntax(syntax)
+
   private def module(syntax: String) = syntax.stripPrefix("effect.")
 
   /** Import roots (without the trailing `._`) that provide `syntax`. */
   def providers(syntax: String): Set[String] =
-    if (isEffectSyntax(syntax)) EffectAll + s"cats.effect.syntax.${module(syntax)}"
+    if (isPackageRoot(syntax)) Set(syntax)
+    else if (isEffectSyntax(syntax)) EffectAll + s"cats.effect.syntax.${module(syntax)}"
     else CoreAll + s"cats.syntax.${module(syntax)}"
 
   /** The import root to add for `syntax` according to the configured (or detected) style. */
-  def rootFor(syntax: String, style: ImportStyle): String = (style, isEffectSyntax(syntax)) match {
+  def rootFor(syntax: String, style: ImportStyle): String =
+    if (isPackageRoot(syntax)) syntax else catsRootFor(syntax, style)
+
+  private def catsRootFor(syntax: String, style: ImportStyle): String = (style, isEffectSyntax(syntax)) match {
     case (ImportStyle.Granular, true)  => s"cats.effect.syntax.${module(syntax)}"
     case (ImportStyle.Granular, false) => s"cats.syntax.${module(syntax)}"
     case (ImportStyle.Implicits, true) => "cats.effect.implicits"
@@ -46,6 +57,7 @@ object Imports {
    * `cats.syntax.functor._` imports gets another granular import, not `cats.syntax.all._`), else the effective style.
    */
   def rootFor(syntax: String, place: PsiElement): String = {
+    if (isPackageRoot(syntax)) return syntax
     val inScope  = try wildcardRootsInScope(place) catch { case NonFatal(_) => Set.empty[String] }
     val granular = inScope.exists { r =>
       (r.startsWith("cats.syntax.") && r != "cats.syntax.all") ||

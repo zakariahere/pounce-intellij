@@ -30,6 +30,9 @@ projects. It aims to feel like IntelliJ's Spring support, but for Typelevel and 
     whether or not the syntax is already imported.
 - **Tuples:** `(fa, fb).mapN((a, b) => …)`, `parMapN`, `tupled`, `flatMapN`, with the right arity.
 - **Lifts ranked by expected type:** `.asRight[String]`, `.some`, `.pure[F]`, `.raiseError[F, A]`, `.validNel`…
+- **Durations without the import:** `5.seconds`, `250.millis`, `10.minutes`, `1.5.hours`, `3L.days`, on `Int`, `Long`
+  and `Double` (every unit, plural and singular). Picking one adds `import scala.concurrent.duration._`. They come
+  first when a `FiniteDuration` is expected (`IO.sleep(5.<caret>)`, `val timeout: FiniteDuration = 5.<caret>`).
 - **Smart completion** (Ctrl+Shift+Space):
   - constructors of the expected type (`IO.pure`, `OptionT.liftF`);
   - `Sync[F].delay(…)` when the bound is in scope;
@@ -38,7 +41,8 @@ projects. It aims to feel like IntelliJ's Spring support, but for Typelevel and 
 - **Postfix templates:** `.io`, `.delay`, `.blocking`, `.pure`, `.some`, `.asRight`, `.void`, `.attempt`, `.start`,
   `.traverse`, `.liftF`, `.eval`.
 - **Quick docs** (Ctrl+Q) on suggestions: signature, constraints, example, and *why it applies here*.
-- All of this runs on a curated catalog of 600+ operations from cats-core, cats-data, cats-effect (+ std) and fs2.
+- All of this runs on a curated catalog of 600+ operations from cats-core, cats-data, cats-effect (+ std), fs2 and
+  `scala.concurrent.duration`.
 
 ### Inspections that catch real effect bugs (28 inspections, most with quick fixes)
 | Inspection | Example |

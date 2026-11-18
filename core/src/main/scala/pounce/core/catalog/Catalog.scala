@@ -33,7 +33,8 @@ enum OpKind {
  * @param receiver shape of the receiver (`F[A]`) for Syntax/Method; the companion name for Companion; `A` for Lift
  * @param requires typeclass constraints on shape variables: `F -> Traverse`, `G -> Applicative`
  * @param syntax   syntax module the extension comes from: `traverse` (→ `cats.syntax.traverse._`) or
- *                 `effect.spawn` (→ `cats.effect.syntax.spawn._`); empty for methods / companions
+ *                 `effect.spawn` (→ `cats.effect.syntax.spawn._`), or a full package root such as
+ *                 `scala.concurrent.duration` (imported as-is); empty for methods / companions
  * @param insert   text to insert after the dot; `|` marks the caret (default: `name(|)` or `name` when no params)
  */
 final case class Op(
