@@ -217,4 +217,34 @@ class TupleAndLiftCompletionTest extends CompletionTestBase {
     )
     assertContains(pounceNames, "asLeft")
   }
+
+  // ---- .invalidNel / .validNel in if branches of a block typed ValidatedNel[String, Unit] ----
+
+  private def validation(invalidBranch: String, validBranch: String): String =
+    s"""import cats.data.ValidatedNel
+       |
+       |object Test {
+       |  val MinYear = 2000
+       |  val startYear = 1999
+       |  val minYearError: ValidatedNel[String, Unit] = {
+       |    if (startYear < MinYear)
+       |      $invalidBranch
+       |    else $validBranch
+       |  }
+       |}
+       |""".stripMargin
+
+  private val withImport = (s: String) => s.replace("import cats.data.ValidatedNel\n", "import cats.data.ValidatedNel\nimport cats.syntax.all._\n")
+
+  def testInvalidNelInIfBranchTakesTheExpectedType(): Unit = {
+    complete(validation("s\"Start year $startYear is too old\".invalidN<caret>", "().validNel"))
+    selectPounce("invalidNel")
+    checkResult(withImport(validation("s\"Start year $startYear is too old\".invalidNel[Unit]<caret>", "().validNel")))
+  }
+
+  def testValidNelOnUnitInElseBranchTakesTheExpectedType(): Unit = {
+    complete(validation("\"too old\".invalidNel", "().validN<caret>"))
+    selectPounce("validNel")
+    checkResult(withImport(validation("\"too old\".invalidNel", "().validNel[String]<caret>")))
+  }
 }
