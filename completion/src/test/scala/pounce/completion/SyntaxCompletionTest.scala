@@ -52,6 +52,45 @@ class SyntaxCompletionTest extends CompletionTestBase {
     )
   }
 
+  def testOrderSyntaxOnUserTypeAddsImport(): Unit = {
+    val names = complete(
+      """import cats.Order
+        |
+        |object Test {
+        |  final case class Contract(id: String, premium: BigDecimal)
+        |  object Contract { implicit val byPremium: Order[Contract] = Order.by(_.premium) }
+        |  val a = Contract("C1", 120)
+        |  def run = a.comp<caret>
+        |}
+        |""".stripMargin
+    )
+    assertContains(names, "compare", "comparison")
+    selectPounce("compare")
+    checkResult(
+      """import cats.Order
+        |import cats.syntax.all._
+        |
+        |object Test {
+        |  final case class Contract(id: String, premium: BigDecimal)
+        |  object Contract { implicit val byPremium: Order[Contract] = Order.by(_.premium) }
+        |  val a = Contract("C1", 120)
+        |  def run = a.compare(<caret>)
+        |}
+        |""".stripMargin
+    )
+  }
+
+  def testNativeCompareIsNotDuplicated(): Unit = {
+    val names = complete(
+      """object Test {
+        |  val n: Int = 1
+        |  def run = n.comp<caret>
+        |}
+        |""".stripMargin
+    )
+    assertEquals(s"compare once in $names", 1, names.count(_ == "compare"))
+  }
+
   def testNoDuplicatesWhenImportPresent(): Unit = {
     val names = complete(
       """import cats.syntax.all._

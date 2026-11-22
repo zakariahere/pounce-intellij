@@ -1,7 +1,7 @@
 package pounce.inspections.tagless
 
 import com.intellij.codeInsight.intention.IntentionAction
-import org.junit.Assert.{assertFalse, assertTrue}
+import org.junit.Assert.{assertEquals, assertFalse, assertTrue}
 import pounce.inspections.{InspectionFixtureTestBase, MessageTestBase}
 
 import scala.jdk.CollectionConverters.*
@@ -149,5 +149,84 @@ class StrengthenBoundFixProviderTest extends InspectionFixtureTestBase {
   def testImportWhenSyntaxMissing(): Unit = {
     val ns = names(s"import cats._\nobject A { def f[F[_]: Monad](fa: F[Int]): F[Int] = fa.flat${CARET}Map(i => fa) }")
     assertTrue(s"intentions: $ns", ns.contains("Import cats.syntax.all._"))
+  }
+
+  // ---- proper receivers: Order / PartialOrder / Eq syntax on a plain value ----
+
+  private def ordered(expr: String, instance: Boolean = true): String =
+    s"""import cats.Order
+       |object A {
+       |  final case class Contract(id: String, premium: BigDecimal)
+       |  object Contract { ${if (instance) "implicit val byPremium: Order[Contract] = Order.by(_.premium)" else ""} }
+       |  val a = Contract("C1", 120)
+       |  val b = Contract("C2", 95)
+       |  val r = $expr
+       |}""".stripMargin
+
+  def testImportForCompareDotCall(): Unit = {
+    val ns = names(ordered(s"a.comp${CARET}are(b)"))
+    assertTrue(s"intentions: $ns", ns.contains("Import cats.syntax.all._"))
+  }
+
+  def testImportForInfixCompare(): Unit = {
+    val ns = names(ordered(s"a ${CARET}compare b"))
+    assertTrue(s"intentions: $ns", ns.contains("Import cats.syntax.all._"))
+  }
+
+  def testImportForInfixMin(): Unit = {
+    val ns = names(ordered(s"a ${CARET}min b"))
+    assertTrue(s"intentions: $ns", ns.contains("Import cats.syntax.all._"))
+  }
+
+  def testImportForPartialOrderOperatorBackedByOrder(): Unit = {
+    val ns = names(ordered(s"a ${CARET}> b"))
+    assertTrue(s"intentions: $ns", ns.contains("Import cats.syntax.all._"))
+  }
+
+  def testApplyImportFixesOperator(): Unit = {
+    val action = intentions(ordered(s"a ${CARET}> b")).find(_.getText == "Import cats.syntax.all._")
+    assertTrue("import action", action.isDefined)
+    myFixture.launchAction(action.get)
+    assertTrue(myFixture.getFile.getText, myFixture.getFile.getText.contains("import cats.syntax.all._"))
+  }
+
+  def testNoImportWithoutInstance(): Unit = {
+    val ns = names(ordered(s"a ${CARET}> b", instance = false))
+    assertFalse(s"intentions: $ns", ns.exists(_.startsWith("Import cats.syntax")))
+  }
+
+  def testProperOpsTable(): Unit = {
+    assertEquals(Seq(Some("Order")), StrengthenBoundFixProvider.properOps("compare").map(_._2))
+    assertEquals(Seq(Some("PartialOrder")), StrengthenBoundFixProvider.properOps(">").map(_._2))
+    assertEquals(Seq(Some("Eq")), StrengthenBoundFixProvider.properOps("===").map(_._2))
+    assertEquals(Seq(None), StrengthenBoundFixProvider.properOps("invalidNel").map(_._2))
+  }
+
+  // ---- lifts that need no instance: "error".invalidNel / ().validNel ----
+
+  private def validation(branch: String): String =
+    s"""import cats.data.ValidatedNel
+       |object A {
+       |  val MinYear = 2000
+       |  val startYear = 1999
+       |  val minYearError: ValidatedNel[String, Unit] = {
+       |    if (startYear < MinYear)
+       |      $branch
+       |    else ().validNel
+       |  }
+       |}""".stripMargin
+
+  def testImportForInvalidNel(): Unit = {
+    val ns = names(validation(s"""s"Start year $${startYear} should be at least $$MinYear".invalid${CARET}Nel"""))
+    assertTrue(s"intentions: $ns", ns.contains("Import cats.syntax.all._"))
+  }
+
+  def testApplyImportForInvalidNelFixesBothBranches(): Unit = {
+    val action = intentions(validation(s""""too old".invalid${CARET}Nel""")).find(_.getText == "Import cats.syntax.all._")
+    assertTrue("import action", action.isDefined)
+    myFixture.launchAction(action.get)
+    assertTrue(myFixture.getFile.getText, myFixture.getFile.getText.contains("import cats.syntax.all._"))
+    val unresolved = myFixture.doHighlighting().asScala.filter(_.getSeverity == com.intellij.lang.annotation.HighlightSeverity.ERROR)
+    assertTrue(s"errors left: ${unresolved.map(_.getDescription)}", unresolved.isEmpty)
   }
 }
